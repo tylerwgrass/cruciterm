@@ -81,8 +81,8 @@ func parseState(puz *puzzle.PuzzleDefinition, file *os.File) error {
 	if _, err := file.Read(puzzleState); err != nil {
 		return err
 	}
-	puz.Answer = string(puzzleState[:numCells + 1])
-	puz.CurrentState = string(puzzleState[numCells + 1:])
+	puz.Answer = string(puzzleState[:numCells])
+	puz.CurrentState = string(puzzleState[numCells:])
 	return nil
 }
 
