@@ -20,7 +20,7 @@ type PuzzleDefinition struct {
 	CurrentState string
 }
 
-func Format(puz *PuzzleDefinition) {
+func (puz PuzzleDefinition) Format() {
 	fmt.Println(puz.Title, puz.Author, puz.Copyright)
 	acrossKeys := make([]int, 0, len(puz.AcrossClues))
 	downKeys := make([]int, 0, len(puz.DownClues))
