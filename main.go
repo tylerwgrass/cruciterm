@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/tylerwgrass/cruciterm/loader"
+	"github.com/tylerwgrass/cruciterm/solver"
 )
 
 var TEST_FILE_PATH string = "./puzzles/test.puz"
@@ -21,5 +22,5 @@ func main() {
 		return
 	}
 
-	puz.Format()
+	solver.Run(&puz)
 }
