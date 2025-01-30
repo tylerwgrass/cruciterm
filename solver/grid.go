@@ -1,10 +1,18 @@
 package solver
 
 import (
+	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tylerwgrass/cruciterm/puzzle"
+)
+
+type Direction int 
+
+const (
+	Horizontal Direction = iota
+	Vertical
 )
 
 type gridModel struct {
@@ -45,30 +53,21 @@ func (m gridModel) Init() tea.Cmd {
 func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
     case tea.KeyMsg:
+				if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
+					m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
+					m.advanceCursor(Horizontal, 1, true) 
+					break
+				}
+
         switch msg.String() {
 				case "up":
-					if m.cursorY > 0 {
-						m.navigateVertical(-1)
-					}
-
+						m.advanceCursor(Vertical, -1, true)
 				case "down":
-					if m.cursorY < len(m.Grid)-1 {
-						m.navigateVertical(1)
-					}
-
+						m.advanceCursor(Vertical, 1, true)
 				case "left":
-					if m.cursorX > 0 {
-						m.navigateHorizontal(-1)
-					}
-
+						m.advanceCursor(Horizontal, -1, true)
 				case "right":
-					if m.cursorX < len(m.Grid[0])-1 {
-						m.navigateHorizontal(1)
-					}
-				//TODO: handle ctrl chars
-				default:
-					m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
-					m.navigateHorizontal(1) 
+						m.advanceCursor(Horizontal, 1, true)
 				}
     }
 
@@ -79,9 +78,10 @@ func (m gridModel) View() string {
 	var sb strings.Builder
 
 	for i, row := range m.Grid {
+		sb.WriteString(" ")
 		for j, cell := range row {
 			if i == m.cursorY && j == m.cursorX {
-				sb.WriteString("_ ")
+				sb.WriteString("> ")
 				continue
 			}
 			switch cell {
@@ -91,7 +91,7 @@ func (m gridModel) View() string {
 				sb.WriteString("  ")
 			default:
 				sb.WriteString(cell + " ")
-			}
+			} 
 		}
 		if i < len(m.Grid)-1 {
 			sb.WriteString("\n")
@@ -101,20 +101,50 @@ func (m gridModel) View() string {
 	return baseStyle.Render(sb.String())
 }
 
-func (m *gridModel) navigateHorizontal(dir int) {
-	for i := m.cursorX + dir; i >= 0 && i < len(m.Grid[0]); i += dir {
-		if m.Grid[m.cursorY][i] != "." {
-			m.cursorX = i
-			return
-		}
+func (m* gridModel) advanceCursor(dir Direction, delta int, wrap bool) {
+	if dir == Horizontal {
+		m.advanceHorizontal(delta, wrap)
+	} else {
+		m.advanceVertical(delta, wrap)
 	}
 }
 
-func (m *gridModel) navigateVertical(dir int) {
-	for i := m.cursorY + dir; i >= 0 && i < len(m.Grid); i += dir {
-		if m.Grid[i][m.cursorX] != "." {
-			m.cursorY = i
-			return
+func (m *gridModel) advanceHorizontal(delta int, wrap bool) (int, int) {
+	row, col := m.cursorY, m.cursorX
+	col += delta
+	for row < len(m.Grid) {		
+		for i := col; i >= 0 && i < len(m.Grid[0]); i += delta {
+			if m.Grid[row][i] != "." {
+				m.cursorX = i
+				m.cursorY = row
+				return m.cursorX, m.cursorY
+			}
 		}
+		if !wrap {
+			break
+		}
+		row++
+		col = 0
 	}
+	return m.cursorX, m.cursorY
+}
+
+func (m *gridModel) advanceVertical(delta int, wrap bool) (int, int) {
+	row, col := m.cursorY, m.cursorX
+	row += delta
+	for col < len(m.Grid[0]) {
+		for i := row; i >= 0 && i < len(m.Grid); i += delta {
+			if m.Grid[i][col] != "." {
+				m.cursorX = col
+				m.cursorY = i
+				return m.cursorX, m.cursorY
+			}
+		}
+		if !wrap {
+			break
+		}
+		col++
+		row = 0
+	}
+	return m.cursorX, m.cursorY
 } 
