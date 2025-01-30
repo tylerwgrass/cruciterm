@@ -92,7 +92,7 @@ func parseContent(puz *puzzle.PuzzleDefinition, file *os.File) error {
 	delim := byte(0)
 	content := make([]string, puz.NumClues + 4)
 	index := 0
-	for {
+	for index < len(content) {
 		contentBytes, err := reader.ReadBytes(delim)
 		if err != nil {
 			if err.Error() == "EOF" {
