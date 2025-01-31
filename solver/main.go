@@ -18,15 +18,11 @@ type mainModel struct {
 	downClues map[int]string
 	clues cluesModel
 	grid tea.Model
-	solution string
 	cursorX int
 	cursorY int
 }
 
 func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
-	grid := initGridModel(puz)
-	clues := initCluesModel(puz)
-
 	var initialX int
 	var initialY int
 	for i, char := range puz.CurrentState {
@@ -36,6 +32,8 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 			break
 		}
 	}
+	grid := initGridModel(puz)
+	clues := initCluesModel(puz)
 
 	return mainModel{
 		title: puz.Title,
@@ -45,7 +43,6 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 		downClues: puz.DownClues,
 		grid: grid,
 		clues: clues,
-		solution: puz.Answer,
 		cursorX: initialX,
 		cursorY: initialY,
 	}
@@ -69,7 +66,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m mainModel) View() string {
 	header := fmt.Sprintf("%s\n%s %s\n", m.title, m.author, m.copyright)
-	if m.validateSolution() {
+	if m.grid.(gridModel).solved {
 		header += "Solved!\n"
 	}
 	footer := ("\nPress ctrl+c to quit.\n")
@@ -80,20 +77,6 @@ func (m mainModel) View() string {
 		footer,
 	)
 }
-
-	func (m mainModel) validateSolution() bool {
-		grid := m.grid.(gridModel).Grid
-		numRows := len(grid)
-		numCols := len(grid[0])
-		for i := 0; i < numRows; i++ {
-			for j := 0; j < numCols; j++ {
-				if (grid[i][j] != string(m.solution[(i*numCols)+j])) {
-					return false	
-				}
-			}
-		}
-		return true 
-	}
 
 func Run(puz *puzzle.PuzzleDefinition) {
 	p := tea.NewProgram(initMainModel(puz))

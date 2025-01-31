@@ -17,6 +17,8 @@ const (
 
 type gridModel struct {
 	Grid [][]string
+	solution string
+	solved bool
 	cursorX int
 	cursorY int
 }
@@ -26,7 +28,7 @@ func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
 	var initialX int
 	var initialY int
 	startFound := false
-
+	solved := true
 	for i := range puz.NumRows {
 		grid[i] = make([]string, puz.NumCols)
 		for j := range puz.NumCols {
@@ -36,11 +38,16 @@ func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
 				initialX = j
 				initialY = i
 			}
+			if grid[i][j] != string(puz.Answer[i*puz.NumCols+j]) {
+				solved = false
+			}
 		}
 	}
 
 	return gridModel{
 		Grid: grid,
+		solved: solved,
+		solution: puz.Answer,
 		cursorX: initialX,
 		cursorY: initialY,
 	}
@@ -53,35 +60,42 @@ func (m gridModel) Init() tea.Cmd {
 func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
     case tea.KeyMsg:
-				if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
-					m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
-					m.advanceCursor(Horizontal, 1, true) 
-					break
-				}
+			if m.solved {
+				break
+			}
 
-        switch msg.String() {
-				case "up":
-						m.advanceCursor(Vertical, -1, true)
-				case "down":
-						m.advanceCursor(Vertical, 1, true)
-				case "left":
-						m.advanceCursor(Horizontal, -1, true)
-				case "right":
-						m.advanceCursor(Horizontal, 1, true)
-				}
+			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
+				m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
+				m.advanceCursor(Horizontal, 1, true) 
+				break
+			}
+
+			switch msg.String() {
+			case "up":
+					m.advanceCursor(Vertical, -1, true)
+			case "down":
+					m.advanceCursor(Vertical, 1, true)
+			case "left":
+					m.advanceCursor(Horizontal, -1, true)
+			case "right":
+					m.advanceCursor(Horizontal, 1, true)
+			}
     }
-
+		m.validateSolution()
     return m, nil
 }
 
 func (m gridModel) View() string {
 	var sb strings.Builder
-
 	for i, row := range m.Grid {
 		sb.WriteString(" ")
 		for j, cell := range row {
 			if i == m.cursorY && j == m.cursorX {
-				sb.WriteString("> ")
+				if m.solved {
+					sb.WriteString(cell + " ")
+				} else {
+					sb.WriteString("> ")
+				}
 				continue
 			}
 			switch cell {
@@ -147,4 +161,19 @@ func (m *gridModel) advanceVertical(delta int, wrap bool) (int, int) {
 		row = 0
 	}
 	return m.cursorX, m.cursorY
-} 
+}
+
+func (m *gridModel) validateSolution() {
+	grid := m.Grid
+	numRows := len(grid)
+	numCols := len(grid[0])
+	for i := 0; i < numRows; i++ {
+		for j := 0; j < numCols; j++ {
+			if (grid[i][j] != string(m.solution[(i*numCols)+j])) {
+				m.solved = false
+				return
+			}
+		}
+	}
+	m.solved = true
+}
