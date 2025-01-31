@@ -27,6 +27,7 @@ type gridModel struct {
 	solved bool
 	cursorX int
 	cursorY int
+	navDirection Direction
 }
 
 func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
@@ -56,6 +57,7 @@ func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
 		solution: puz.Answer,
 		cursorX: initialX,
 		cursorY: initialY,
+		navDirection: Horizontal,
 	}
 }
 
@@ -72,13 +74,15 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
 				m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
-				m.advanceCursor(Horizontal, 1, true) 
+				m.advanceCursor(m.navDirection, 1, true) 
 				break
 			}
 
 			switch msg.String() {
+			case " ":
+				m.changeNavDirection()
 			case "tab":
-				m.advanceClue(Horizontal, 1, true)
+				m.advanceClue(m.navDirection, 1, true)
 			case "up":
 				m.advanceCursor(Vertical, -1, true)
 			case "down":
@@ -95,6 +99,12 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m gridModel) View() string {
 	var sb strings.Builder
+	var cursor rune
+	if (m.navDirection == Horizontal) {
+		cursor = '>'
+	} else {
+		cursor = 'v'
+	}
 	for i, row := range m.Grid {
 		sb.WriteString(" ")
 		for j, cell := range row {
@@ -102,7 +112,7 @@ func (m gridModel) View() string {
 				if m.solved {
 					sb.WriteString(cell + " ")
 				} else {
-					sb.WriteString("> ")
+					sb.WriteString(string(cursor) + " ")
 				}
 				continue
 			}
@@ -121,6 +131,14 @@ func (m gridModel) View() string {
 	}
 
 	return baseStyle.Render(sb.String())
+}
+
+func (m *gridModel) changeNavDirection() {
+	if m.navDirection == Horizontal {
+		m.navDirection = Vertical
+	} else {
+		m.navDirection = Horizontal
+	}
 }
 
 func (m *gridModel) advanceCursor(dir Direction, delta int, wrap bool) {
