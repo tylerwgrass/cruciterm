@@ -12,7 +12,7 @@ const (
 )
 
 var defaultPreferences = map[Preference]interface{}{
-	SwapCursorOnDirectionChange: false,
+	SwapCursorOnDirectionChange: true,
 	SwapCursorOnGridWrap: true,
 	WrapAtEndOfGrid: true,
 }

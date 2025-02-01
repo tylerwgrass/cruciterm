@@ -108,41 +108,6 @@ func parseContent(puz *puzzle.PuzzleDefinition, file *os.File) error {
 	puz.Author = content[1]
 	puz.Copyright = content[2]
 	puz.Notes = content[len(content)-1]
-	assignClues(puz, content[3:len(content)-1])
+	puz.AssignClues(content[3:len(content)-1])
 	return nil
-}
-
-func assignClues(puz *puzzle.PuzzleDefinition, clues []string) {
-	clueNum := 1
-	clueIndex := 0
-	acrossClues := make(map[int]string)
-	downClues := make(map[int]string)
-	for i := 0; i < len(puz.Answer); i++ {
-		if string(puz.Answer[i]) == "." {
-			continue
-		}
-
-		isStartOfClue := false
-		row := i / puz.NumCols
-		col := i % puz.NumCols
-
-		if col == 0 || string(puz.Answer[(puz.NumCols * (row)) + col - 1]) == "." {
-			acrossClues[clueNum] = clues[clueIndex]
-			clueIndex++
-			isStartOfClue = true
-		}
-
-		if row == 0 || string(puz.Answer[(puz.NumCols * (row - 1)) + col]) == "." {
-			downClues[clueNum] = clues[clueIndex]
-			clueIndex++
-			isStartOfClue = true
-		}
-
-		if isStartOfClue {
-			clueNum++
-		}
-	}
-	
-	puz.AcrossClues = acrossClues
-	puz.DownClues = downClues
 }

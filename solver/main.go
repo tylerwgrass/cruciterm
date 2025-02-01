@@ -14,8 +14,6 @@ type mainModel struct {
 	title string
 	author string
 	copyright string
-	acrossClues map[int]string
-	downClues map[int]string
 	clues cluesModel
 	grid tea.Model
 	cursorX int
@@ -39,8 +37,6 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 		title: puz.Title,
 		author: puz.Author,
 		copyright: puz.Copyright,
-		acrossClues: puz.AcrossClues,
-		downClues: puz.DownClues,
 		grid: grid,
 		clues: clues,
 		cursorX: initialX,

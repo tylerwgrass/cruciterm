@@ -1,10 +1,5 @@
 package puzzle
 
-import (
-	"fmt"
-	"sort"
-)
-
 type PuzzleDefinition struct {
 	Title string
 	Author string
@@ -13,31 +8,62 @@ type PuzzleDefinition struct {
 	Notes string
 	NumRows int
 	NumCols int
-	AcrossClues map[int]string
-	DownClues map[int]string
+	Clues map[int]Clue
 	NumClues int
 	Answer string
 	CurrentState string
 }
 
-func (puz PuzzleDefinition) Format() {
-	fmt.Println(puz.Title, puz.Author, puz.Copyright)
-	acrossKeys := make([]int, 0, len(puz.AcrossClues))
-	downKeys := make([]int, 0, len(puz.DownClues))
-	for key := range puz.AcrossClues {
-		acrossKeys = append(acrossKeys, key)
+type Clue struct {
+	Num int
+	StartY int
+	StartX int
+	AcrossClue string
+	DownClue string
+}
+
+var Clues map[int]Clue
+var AcrossClues []*Clue
+var DownClues []*Clue
+
+func (puz * PuzzleDefinition) AssignClues(clues []string) {
+	Clues = make(map[int]Clue)
+	clueNum := 1
+	clueIndex := 0
+	for i := 0; i < len(puz.Answer); i++ {
+		if string(puz.Answer[i]) == "." {
+			continue
+		}
+
+		row := i / puz.NumCols
+		col := i % puz.NumCols
+
+		isAcrossClueStart := col == 0 || string(puz.Answer[(puz.NumCols * (row)) + col - 1]) == "." 
+		isDownClueStart := row == 0 || string(puz.Answer[(puz.NumCols * (row - 1)) + col]) == "." 
+		if (!(isAcrossClueStart || isDownClueStart)) { 
+			continue
+		}
+		
+		clue := Clue{
+			Num: clueNum,
+			StartY: row,
+			StartX: col,
+		}
+
+		if isAcrossClueStart {
+			AcrossClues = append(AcrossClues, &clue)
+			clue.AcrossClue = clues[clueIndex]
+			clueIndex++
+		}
+
+		if isDownClueStart {
+			DownClues = append(DownClues, &clue)
+			clue.DownClue = clues[clueIndex]
+			clueIndex++
+		}
+		Clues[clueNum] = clue
+
+		clueNum++
 	}
-	for key := range puz.DownClues {
-		downKeys = append(downKeys, key)
-	}
-	sort.Ints(acrossKeys)
-	sort.Ints(downKeys)
-	fmt.Println("*** ACROSS ***")
- 	for _, key := range acrossKeys {
-		fmt.Printf("%dA. %s\n", key, puz.AcrossClues[key])
-	}
-	fmt.Println("*** DOWN ***")
-	for _, key := range downKeys {
-		fmt.Printf("%dD. %s\n", key, puz.DownClues[key])
-	}
+	puz.Clues = Clues
 }

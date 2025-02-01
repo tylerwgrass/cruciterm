@@ -19,7 +19,7 @@ type cluesModel struct {
 }
 
 func initCluesModel(puz *puzzle.PuzzleDefinition) cluesModel {
-  acrossClues, downClues := organizeClues(puz.AcrossClues, puz.DownClues)
+  acrossClues, downClues := organizeClues(puz)
 
 	cols := []table.Column{
 		{Title: "Across", Width: 40},
@@ -90,16 +90,17 @@ func buildRows(acrosses []string, downs []string) []table.Row {
 	return rows
 }
 
-func organizeClues(acrosses, downs map[int]string) ([]string, []string) {
-	acrossKeys := make([]int, 0, len(acrosses))
-	downKeys := make([]int, 0, len(downs))
+func organizeClues(puz *puzzle.PuzzleDefinition) ([]string, []string) {
+	acrossKeys := make([]int, 0)
+	downKeys := make([]int, 0)
 
-	for key := range acrosses {
-		acrossKeys = append(acrossKeys, key)
-	}
-
-	for key := range downs {
-		downKeys = append(downKeys, key)
+	for key, clue := range puz.Clues {
+		if clue.AcrossClue != "" {
+			acrossKeys = append(acrossKeys, key)
+		}
+		if clue.DownClue != "" {
+			downKeys = append(downKeys, key)
+		}
 	}
 
 	sort.Ints(acrossKeys)
@@ -109,10 +110,10 @@ func organizeClues(acrosses, downs map[int]string) ([]string, []string) {
 	downClues := make([]string, len(downKeys))
 
  	for i, key := range acrossKeys {
-		acrossClues[i] = fmt.Sprintf("%d. %s", key, acrosses[key])
+		acrossClues[i] = fmt.Sprintf("%d. %s", key, puz.Clues[key].AcrossClue)
 	}
 	for i, key := range downKeys {
-		downClues[i] = fmt.Sprintf("%d. %s", key, downs[key])
+		downClues[i] = fmt.Sprintf("%d. %s", key, puz.Clues[key].DownClue)
 	}
 
 	return acrossClues, downClues
