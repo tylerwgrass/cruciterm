@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
 
@@ -99,12 +100,13 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m gridModel) View() string {
 	var sb strings.Builder
-	var cursor rune
+	var cursor string
 	if (m.navDirection == Horizontal) {
-		cursor = '>'
+		cursor = ">"
 	} else {
-		cursor = 'v'
+		cursor = "v" 
 	}
+	cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Render(cursor)
 	for i, row := range m.Grid {
 		sb.WriteString(" ")
 		for j, cell := range row {
