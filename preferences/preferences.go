@@ -4,6 +4,7 @@ type Preference int
 
 const (
 	SwapCursorOnDirectionChange Preference = iota
+	WrapAtEndOfGrid
 )
 
 var prefs map[Preference]interface{}
@@ -15,6 +16,7 @@ func Init() {
 func getDefaultPreferences() map[Preference]interface{} {
 	return map[Preference]interface{}{
 		SwapCursorOnDirectionChange: false,
+		WrapAtEndOfGrid: true,
 	}
 }
 
