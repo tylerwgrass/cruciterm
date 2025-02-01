@@ -89,6 +89,9 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			switch msg.String() {
+			case "backspace":
+				m.Grid[m.cursorY][m.cursorX] = "-"
+				m.advanceCursor(m.navOrientation, Reverse)
 			case " ":
 				m.changeNavOrientation()
 			case "shift+tab":
