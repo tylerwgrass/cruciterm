@@ -1,23 +1,22 @@
 package preferences
 
+import "maps"
+
 type Preference int
+var prefs map[Preference]interface{}
 
 const (
 	SwapCursorOnDirectionChange Preference = iota
 	WrapAtEndOfGrid
 )
 
-var prefs map[Preference]interface{}
-
-func Init() {
-	prefs = getDefaultPreferences()
+var defaultPreferences = map[Preference]interface{}{
+	SwapCursorOnDirectionChange: false,
+	WrapAtEndOfGrid: true,
 }
 
-func getDefaultPreferences() map[Preference]interface{} {
-	return map[Preference]interface{}{
-		SwapCursorOnDirectionChange: false,
-		WrapAtEndOfGrid: true,
-	}
+func Init() {
+	prefs = maps.Clone(defaultPreferences)
 }
 
 func Get(k Preference) interface{} {
