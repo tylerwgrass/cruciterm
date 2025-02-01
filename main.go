@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/tylerwgrass/cruciterm/loader"
+	"github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/solver"
 )
 
@@ -21,6 +22,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
+	preferences.Init()
 	solver.Run(&puz)
 }

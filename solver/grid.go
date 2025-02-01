@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
 
@@ -67,6 +68,7 @@ func (m gridModel) Init() tea.Cmd {
 }
 
 func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	swapCursor := prefs.GetBool(prefs.SwapCursorOnDirectionChange)
 	switch msg := msg.(type) {
     case tea.KeyMsg:
 			if m.solved {
@@ -85,13 +87,29 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "tab":
 				m.advanceClue(m.navDirection, 1, true)
 			case "up":
-				m.advanceCursor(Vertical, -1, true)
+				if swapCursor && m.navDirection != Vertical {
+					m.changeNavDirection()
+				} else {
+					m.advanceCursor(Vertical, -1, true)
+				}
 			case "down":
-				m.advanceCursor(Vertical, 1, true)
+				if swapCursor && m.navDirection != Vertical {
+					m.changeNavDirection()
+				} else {
+					m.advanceCursor(Vertical, 1, true)
+				}
 			case "left":
-				m.advanceCursor(Horizontal, -1, true)
+				if swapCursor && m.navDirection != Horizontal {
+					m.changeNavDirection()
+				} else {
+					m.advanceCursor(Horizontal, -1, true)
+				}
 			case "right":
-				m.advanceCursor(Horizontal, 1, true)
+				if swapCursor && m.navDirection != Horizontal {
+					m.changeNavDirection()
+				} else {
+					m.advanceCursor(Horizontal, 1, true)
+				}
 			}
     }
 		m.validateSolution()
