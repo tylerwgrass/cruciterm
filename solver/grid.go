@@ -11,9 +11,14 @@ import (
 )
 
 type Direction int 
+type Orientation int
+const (
+	Forward Direction = 1
+	Reverse Direction = -1
+)
 
 const (
-	Horizontal Direction = iota
+	Horizontal Orientation = iota
 	Vertical
 )
 
@@ -29,7 +34,7 @@ type gridModel struct {
 	solved bool
 	cursorX int
 	cursorY int
-	navDirection Direction
+	navOrientation Orientation
 }
 
 func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
@@ -59,7 +64,7 @@ func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
 		solution: puz.Answer,
 		cursorX: initialX,
 		cursorY: initialY,
-		navDirection: Horizontal,
+		navOrientation: Horizontal,
 	}
 }
 
@@ -68,7 +73,6 @@ func (m gridModel) Init() tea.Cmd {
 }
 
 func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	swapCursor := prefs.GetBool(prefs.SwapCursorOnDirectionChange)
 	switch msg := msg.(type) {
     case tea.KeyMsg:
 			if m.solved {
@@ -77,39 +81,23 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
 				m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
-				m.advanceCursor(m.navDirection, 1, true) 
+				m.advanceCursor(m.navOrientation, 1, true) 
 				break
 			}
 
 			switch msg.String() {
 			case " ":
-				m.changeNavDirection()
+				m.changeNavOrientation()
 			case "tab":
-				m.advanceClue(m.navDirection, 1, true)
+				m.advanceClue(m.navOrientation, 1, true)
 			case "up":
-				if swapCursor && m.navDirection != Vertical {
-					m.changeNavDirection()
-				} else {
-					m.advanceCursor(Vertical, -1, true)
-				}
+				m.handleCardinal(Vertical, Reverse)
 			case "down":
-				if swapCursor && m.navDirection != Vertical {
-					m.changeNavDirection()
-				} else {
-					m.advanceCursor(Vertical, 1, true)
-				}
+				m.handleCardinal(Vertical, Forward)
 			case "left":
-				if swapCursor && m.navDirection != Horizontal {
-					m.changeNavDirection()
-				} else {
-					m.advanceCursor(Horizontal, -1, true)
-				}
+				m.handleCardinal(Horizontal, Reverse)
 			case "right":
-				if swapCursor && m.navDirection != Horizontal {
-					m.changeNavDirection()
-				} else {
-					m.advanceCursor(Horizontal, 1, true)
-				}
+				m.handleCardinal(Horizontal, Forward)
 			}
     }
 		m.validateSolution()
@@ -119,7 +107,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m gridModel) View() string {
 	var sb strings.Builder
 	var cursor string
-	if (m.navDirection == Horizontal) {
+	if (m.navOrientation == Horizontal) {
 		cursor = ">"
 	} else {
 		cursor = "v" 
@@ -153,23 +141,32 @@ func (m gridModel) View() string {
 	return baseStyle.Render(sb.String())
 }
 
-func (m *gridModel) changeNavDirection() {
-	if m.navDirection == Horizontal {
-		m.navDirection = Vertical
+func (m *gridModel) changeNavOrientation() {
+	if m.navOrientation == Horizontal {
+		m.navOrientation = Vertical
 	} else {
-		m.navDirection = Horizontal
+		m.navOrientation = Horizontal
 	}
 }
 
-func (m *gridModel) advanceCursor(dir Direction, delta int, wrap bool) {
+func (m *gridModel) handleCardinal(o Orientation, d Direction) {
+	swapCursor := prefs.GetBool(prefs.SwapCursorOnDirectionChange)
+	if swapCursor && m.navOrientation != Vertical {
+		m.changeNavOrientation()
+	} else {
+		m.advanceCursor(o, int(d), true)
+	}
+}
+
+func (m *gridModel) advanceCursor(or Orientation, delta int, wrap bool) {
 	var h ValidSquareHalter
-	cursorX, cursorY := m.advanceCursorWithNavigator(dir, delta, wrap, h)
+	cursorX, cursorY := m.advanceCursorWithNavigator(or, delta, wrap, h)
 	m.cursorX = cursorX
 	m.cursorY = cursorY
 }
 
-func (m* gridModel) advanceCursorWithNavigator(dir Direction, delta int, wrap bool, halter NavHalter) (int, int) {
-	if dir == Horizontal {
+func (m* gridModel) advanceCursorWithNavigator(or Orientation, delta int, wrap bool, halter NavHalter) (int, int) {
+	if or == Horizontal {
 		return m.advanceHorizontal(delta, wrap, halter)
 	} else {
 		return m.advanceVertical(delta, wrap, halter)
@@ -222,12 +219,12 @@ func (m gridModel) advanceVertical(delta int, wrap bool, halter NavHalter) (int,
 	return m.cursorX, m.cursorY
 }
 
-func (m *gridModel) advanceClue(dir Direction, delta int, wrap bool) {
+func (m *gridModel) advanceClue(or Orientation, delta int, wrap bool) {
 	var validSquareHalter ValidSquareHalter
 	var blackSquareHalter BlackSquareHalter
 	initX, initY := m.cursorX, m.cursorY
-	m.cursorX, m.cursorY = m.advanceCursorWithNavigator(dir, delta, wrap, blackSquareHalter)
-	nextX, nextY := m.advanceCursorWithNavigator(dir, delta, wrap, validSquareHalter)
+	m.cursorX, m.cursorY = m.advanceCursorWithNavigator(or, delta, wrap, blackSquareHalter)
+	nextX, nextY := m.advanceCursorWithNavigator(or, delta, wrap, validSquareHalter)
 	if m.cursorX == nextX && m.cursorY == nextY {
 		m.cursorX, m.cursorY = initX, initY
 	} else {
