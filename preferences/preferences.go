@@ -7,11 +7,13 @@ var prefs map[Preference]interface{}
 
 const (
 	SwapCursorOnDirectionChange Preference = iota
+	SwapCursorOnGridWrap
 	WrapAtEndOfGrid
 )
 
 var defaultPreferences = map[Preference]interface{}{
 	SwapCursorOnDirectionChange: false,
+	SwapCursorOnGridWrap: true,
 	WrapAtEndOfGrid: true,
 }
 

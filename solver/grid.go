@@ -81,7 +81,10 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
 				m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
-				m.advanceCursor(m.navOrientation, Forward) 
+				didWrap := m.advanceCursor(m.navOrientation, Forward); 
+				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					m.changeNavOrientation()	
+				} 
 				break
 			}
 
@@ -160,14 +163,15 @@ func (m *gridModel) handleCardinal(o Orientation, d Direction) {
 	}
 }
 
-func (m *gridModel) advanceCursor(or Orientation, dir Direction) {
+func (m *gridModel) advanceCursor(or Orientation, dir Direction) bool {
 	var h ValidSquareHalter
-	cursorX, cursorY := m.advanceCursorWithNavigator(m.cursorX, m.cursorY, or, dir, h)
-	m.cursorX = cursorX
-	m.cursorY = cursorY
+	cursorX, cursorY, didWrap := m.advanceCursorWithNavigator(m.cursorX, m.cursorY, or, dir, h)
+	m.cursorX, m.cursorY = cursorX, cursorY
+
+	return didWrap
 }
 
-func (m* gridModel) advanceCursorWithNavigator(initX, initY int, or Orientation, dir Direction, halter NavHalter) (int, int) {
+func (m* gridModel) advanceCursorWithNavigator(initX, initY int, or Orientation, dir Direction, halter NavHalter) (int, int, bool) {
 	if or == Horizontal {
 		return m.advanceHorizontal(initX, initY, int(dir), halter)
 	} else {
@@ -175,7 +179,7 @@ func (m* gridModel) advanceCursorWithNavigator(initX, initY int, or Orientation,
 	}
 }
 
-func (m gridModel) advanceHorizontal(initX, initY, delta int, halter NavHalter) (int, int) {
+func (m gridModel) advanceHorizontal(initX, initY, delta int, halter NavHalter) (int, int, bool) {
 	shouldWrapGrid := prefs.GetBool(prefs.WrapAtEndOfGrid)
 	hasWrappedGrid := false
 
@@ -184,10 +188,10 @@ func (m gridModel) advanceHorizontal(initX, initY, delta int, halter NavHalter) 
 	for row < len(m.Grid) && row >= 0 {		
 		for i := col; i >= 0 && i < len(m.Grid[0]); i += delta {
 			if hasWrappedGrid && i == m.cursorX && row == m.cursorY {
-				return m.cursorX, m.cursorY
+				return m.cursorX, m.cursorY, true
 			}
 			if halter.Halt(m.Grid, row, i) {
-				return i, row
+				return i, row, hasWrappedGrid
 			}
 		}
 		if delta == -1 {
@@ -206,10 +210,10 @@ func (m gridModel) advanceHorizontal(initX, initY, delta int, halter NavHalter) 
 			}
 		}
 	}
-	return m.cursorX, m.cursorY
+	return m.cursorX, m.cursorY, false
 }
 
-func (m gridModel) advanceVertical(initX, initY, delta int, halter NavHalter) (int, int) {
+func (m gridModel) advanceVertical(initX, initY, delta int, halter NavHalter) (int, int, bool) {
 	shouldWrapGrid := prefs.GetBool(prefs.WrapAtEndOfGrid)
 	hasWrappedGrid := false
 
@@ -218,10 +222,10 @@ func (m gridModel) advanceVertical(initX, initY, delta int, halter NavHalter) (i
 	for col < len(m.Grid[0]) && col >= 0 {
 		for i := row; i >= 0 && i < len(m.Grid); i += delta {
 			if hasWrappedGrid && i == m.cursorX && row == m.cursorY {
-				return m.cursorX, m.cursorY
+				return m.cursorX, m.cursorY, true
 			}
 			if halter.Halt(m.Grid, i, col) {
-				return col, i
+				return col, i, hasWrappedGrid
 			}
 		}
 		if delta == -1 {
@@ -240,31 +244,42 @@ func (m gridModel) advanceVertical(initX, initY, delta int, halter NavHalter) (i
 			}
 		}
 	}
-	return m.cursorX, m.cursorY
+	return m.cursorX, m.cursorY, false
 }
 
 func (m *gridModel) advanceClue(or Orientation, dir Direction) {
 	var validSquareHalter ValidSquareHalter
 	var blackSquareHalter BlackSquareHalter
 	initX, initY := m.cursorX, m.cursorY
-	blackX, blackY := m.advanceCursorWithNavigator(initX, initY, or, dir, blackSquareHalter)
-	clueX, clueY := m.advanceCursorWithNavigator(blackX, blackY, or, dir, validSquareHalter)
+	didClueWrap := false
+	blackX, blackY, didWrap := m.advanceCursorWithNavigator(initX, initY, or, dir, blackSquareHalter)
+	didClueWrap = didWrap || didClueWrap
+	clueX, clueY, didWrap := m.advanceCursorWithNavigator(blackX, blackY, or, dir, validSquareHalter)
+	didClueWrap = didWrap || didClueWrap
 
 	if blackX == clueX && blackY == clueY {
 		return
 	}
 	if dir == Forward {
 		m.cursorX, m.cursorY = clueX, clueY
+		if didClueWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+			m.changeNavOrientation()
+		}
 		return
 	}
 
-	blackX, blackY = m.advanceCursorWithNavigator(clueX, clueY, or, dir, blackSquareHalter)
-	clueX, clueY = m.advanceCursorWithNavigator(blackX, blackY, or, Forward, validSquareHalter)
+	blackX, blackY, didWrap = m.advanceCursorWithNavigator(clueX, clueY, or, dir, blackSquareHalter)
+	didClueWrap = didWrap || didClueWrap
+	clueX, clueY, didWrap = m.advanceCursorWithNavigator(blackX, blackY, or, Forward, validSquareHalter)
+	didClueWrap = didWrap || didClueWrap
 
 	if blackX == clueX && blackY == clueY {
 		return
 	}
 	m.cursorX, m.cursorY = clueX, clueY
+	if didClueWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+		m.changeNavOrientation()
+	}
 }
 
 type ValidSquareHalter func(g Grid, i, j int) bool
