@@ -159,7 +159,7 @@ func (m* gridModel) advanceCursorWithNavigator(dir Direction, delta int, wrap bo
 func (m gridModel) advanceHorizontal(delta int, wrap bool, halter NavHalter) (int, int) {
 	row, col := m.cursorY, m.cursorX
 	col += delta
-	for row < len(m.Grid) {		
+	for row < len(m.Grid) && row >= 0 {		
 		for i := col; i >= 0 && i < len(m.Grid[0]); i += delta {
 			if halter.Halt(m.Grid, row, i) {
 				return i, row
@@ -168,8 +168,13 @@ func (m gridModel) advanceHorizontal(delta int, wrap bool, halter NavHalter) (in
 		if !wrap {
 			break
 		}
-		row++
-		col = 0
+		if delta == -1 {
+			row--
+			col = len(m.Grid[0])-1
+		} else {
+			row++
+			col = 0
+		}
 	}
 	return m.cursorX, m.cursorY
 }
@@ -177,7 +182,7 @@ func (m gridModel) advanceHorizontal(delta int, wrap bool, halter NavHalter) (in
 func (m gridModel) advanceVertical(delta int, wrap bool, halter NavHalter) (int, int) {
 	row, col := m.cursorY, m.cursorX
 	row += delta
-	for col < len(m.Grid[0]) {
+	for col < len(m.Grid[0]) && col >= 0 {
 		for i := row; i >= 0 && i < len(m.Grid); i += delta {
 			if halter.Halt(m.Grid, i, col) {
 				return col, i
@@ -186,8 +191,13 @@ func (m gridModel) advanceVertical(delta int, wrap bool, halter NavHalter) (int,
 		if !wrap {
 			break
 		}
-		col++
-		row = 0
+		if delta == -1 {
+			col--
+			row = len(m.Grid)-1
+		} else {
+			col++
+			row = 0
+		}
 	}
 	return m.cursorX, m.cursorY
 }
