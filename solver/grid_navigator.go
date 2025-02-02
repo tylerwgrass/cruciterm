@@ -26,43 +26,40 @@ func NewNavigationGrid(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Nav
 	NavGrid = make([][]Cell, len(puzzleGrid))
 	acrosses := puzzle.AcrossClues
 	downs := puzzle.DownClues
-	currentAcrossIndex := 0
-	currentDownIndex := 0
+	currentAcrossIndex := len(acrosses) - 1 
+	currentDownIndex := len(downs) - 1
 	prevAcross := acrosses[len(acrosses) - 1]
 	nextAcross := acrosses[(currentAcrossIndex + 1) % len(acrosses)]
 	prevDown := downs[len(downs) - 1]
-	nextDown := downs[(currentAcrossIndex + 1) % len(downs)]
+	nextDown := downs[(currentDownIndex + 1) % len(downs)]
 
 	for row := range puz.NumRows {
 		NavGrid[row] = make([]Cell, len(puzzleGrid[0]))
 		for col := range puz.NumCols {
-			if puzzleGrid[row][col] == "." {
-				NavGrid[row][col] = Cell{
-					content: ".",
-				}	
-			} else {
-				if row == nextAcross.StartY && col == nextAcross.StartX {
-					prevAcross = acrosses[currentAcrossIndex]
-					currentAcrossIndex = (currentAcrossIndex + 1) % len(acrosses)
-					nextAcross = acrosses[(currentAcrossIndex + 1) % len(acrosses)]
-				}
-
-				if row == nextDown.StartY && col == nextDown.StartX {
-					prevDown = downs[currentDownIndex]
-					currentDownIndex = (currentDownIndex + 1) % len(downs)
-					nextDown = downs[(currentDownIndex + 1) % len(downs)]
-				}
-				
-				NavGrid[row][col] = Cell{
-					content: puzzleGrid[row][col], 
-					acrossClue: acrosses[currentAcrossIndex].Num,
-					prevAcross: prevAcross.Num,
-					nextAcross: nextAcross.Num,
-					downClue: downs[currentDownIndex].Num,
-					prevDown: prevDown.Num,
-					nextDown: nextDown.Num,
-				}
+			if row == nextAcross.StartY && col == nextAcross.StartX {
+				prevAcross = acrosses[currentAcrossIndex]
+				currentAcrossIndex = (currentAcrossIndex + 1) % len(acrosses)
+				nextAcross = acrosses[(currentAcrossIndex + 1) % len(acrosses)]
 			}
+			if row == nextDown.StartY && col == nextDown.StartX {
+				prevDown = downs[currentDownIndex]
+				currentDownIndex = (currentDownIndex + 1) % len(downs)
+				nextDown = downs[(currentDownIndex + 1) % len(downs)]
+			}
+			cell := Cell{
+				content: puzzleGrid[row][col], 
+					content: puzzleGrid[row][col], 
+				content: puzzleGrid[row][col], 
+				prevAcross: prevAcross.Num,
+				nextAcross: nextAcross.Num,
+				prevDown: prevDown.Num,
+				nextDown: nextDown.Num,
+			}
+			if cell.content != "." {
+				cell.acrossClue = acrosses[currentAcrossIndex].Num
+				cell.downClue = downs[currentDownIndex].Num
+			}
+			NavGrid[row][col] = cell
 		}
 	}
 	return &NavGrid
