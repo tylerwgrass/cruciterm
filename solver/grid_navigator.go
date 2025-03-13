@@ -78,6 +78,11 @@ func (h BlackSquareHalter) Halt(g *NavigationGrid, i, j int) bool {
 	return (*g)[i][j].content == "."
 }
 
+type EmptySquareHalter func(g *NavigationGrid, i, j int) bool
+func (h EmptySquareHalter) Halt(g *NavigationGrid, i, j int) bool {
+	return (*g)[i][j].content == "-"
+}
+
 func (grid NavigationGrid) advanceHorizontal(initX, initY, delta int, halter NavHalter) (int, int, bool) {
 	shouldWrapGrid := prefs.GetBool(prefs.WrapAtEndOfGrid)
 	hasWrappedGrid := false
