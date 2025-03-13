@@ -58,6 +58,8 @@ func NewNavigationGrid(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Nav
 				cell.acrossClue = acrosses[currentAcrossIndex].Num
 				if row > 0 && NavGrid[row - 1][col].content != "." {
 					cell.downClue = NavGrid[row - 1][col].downClue
+					cell.nextDown = NavGrid[row - 1][col].nextDown
+					cell.prevDown = NavGrid[row - 1][col].prevDown
 				} else {
 					cell.downClue = downs[currentDownIndex].Num
 				}

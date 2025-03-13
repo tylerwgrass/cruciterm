@@ -80,7 +80,12 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var didWrap bool
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
 				m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
+				(*m.navGrid)[m.cursorY][m.cursorX].content = strings.ToUpper(string(msg.Runes[0]))
 				m.cursorX, m.cursorY, didWrap = m.navGrid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Forward); 
+				if m.Grid[m.cursorY][m.cursorX] != "-" && prefs.GetBool(prefs.JumpToEmptySquare) {
+					var h EmptySquareHalter
+					m.cursorX, m.cursorY, didWrap = m.navGrid.advanceCursorWithNavigator(m.cursorX, m.cursorY, m.navOrientation, Forward, h)
+				}
 				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					m.changeNavOrientation()	
 				} 
