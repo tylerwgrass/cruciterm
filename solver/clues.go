@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/list"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
 
@@ -14,36 +14,25 @@ var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
+var acrossKeys []int
+var downKeys []int
+var currentAcrossClue int
+var currentDownClue int
+
 type cluesModel struct {
-	table table.Model
+	acrossClues *list.List
+	downClues *list.List
+}
+
+func clueEnumerator(items list.Items, i int) string {
+	return ""
 }
 
 func initCluesModel(puz *puzzle.PuzzleDefinition) cluesModel {
   acrossClues, downClues := organizeClues(puz)
-
-	cols := []table.Column{
-		{Title: "Across", Width: 40},
-		{Title: "Down", Width: 40},
-	}
-
-	rows := buildRows(acrossClues, downClues)
-
-	t := table.New(
-		table.WithColumns(cols),
-		table.WithRows(rows),
-		table.WithHeight(10),
-	)
-
-	style := table.DefaultStyles()
-	style.Header = style.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true)
-
-	t.SetStyles(style)
-
 	return cluesModel{
-		table: t,
+		acrossClues: acrossClues,
+		downClues: downClues,
 	}
 }
 
@@ -57,42 +46,18 @@ func (m cluesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
-		case "down":
-			m.table.MoveDown(1)
-		case "up":
-			m.table.MoveUp(1)
 		}
 	}
 	return m, nil
 }
 
 func (m cluesModel) View() string {
-	return baseStyle.Render(m.table.View()) + "\n"
+	return lipgloss.JoinHorizontal(lipgloss.Top, m.acrossClues.String(), m.downClues.String())
 }
 
-func buildRows(acrosses []string, downs []string) []table.Row {
-	numRows := max(len(acrosses), len(downs))
-	rows := make([]table.Row, numRows)
-	for i := range numRows {
-		row := make([]string, 2)
-		if i < len(acrosses) {
-			row[0] = acrosses[i]
-		} else {
-			row[0] = ""
-		}
-		if i < len(downs) {
-			row[1] = downs[i]
-		} else {
-			row[1] = ""
-		}
-		rows[i] = row
-	}
-	return rows
-}
-
-func organizeClues(puz *puzzle.PuzzleDefinition) ([]string, []string) {
-	acrossKeys := make([]int, 0)
-	downKeys := make([]int, 0)
+func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
+	acrossKeys = make([]int, 0)
+	downKeys = make([]int, 0)
 
 	for key, clue := range puz.Clues {
 		if clue.AcrossClue != "" {
@@ -106,15 +71,28 @@ func organizeClues(puz *puzzle.PuzzleDefinition) ([]string, []string) {
 	sort.Ints(acrossKeys)
 	sort.Ints(downKeys)
 
-	acrossClues := make([]string, len(acrossKeys))
-	downClues := make([]string, len(downKeys))
+	acrossClues := list.New()
+	downClues := list.New()
 
- 	for i, key := range acrossKeys {
-		acrossClues[i] = fmt.Sprintf("%d. %s", key, puz.Clues[key].AcrossClue)
+ 	for _, key := range acrossKeys {
+		acrossClues.Item(fmt.Sprintf("%d. %s", key, puz.Clues[key].AcrossClue)).
+			Enumerator(clueEnumerator).
+			ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
+					if acrossKeys[i] == currentAcrossClue {
+						return lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
+					}
+					return lipgloss.NewStyle()
+			})
 	}
-	for i, key := range downKeys {
-		downClues[i] = fmt.Sprintf("%d. %s", key, puz.Clues[key].DownClue)
+	for _, key := range downKeys {
+		downClues.Item(fmt.Sprintf("%d. %s", key, puz.Clues[key].DownClue)).
+			Enumerator(clueEnumerator).
+			ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
+					if downKeys[i] == currentDownClue {
+						return lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
+					}
+					return lipgloss.NewStyle()
+			})
 	}
-
 	return acrossClues, downClues
 }

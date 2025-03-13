@@ -26,6 +26,7 @@ func NewNavigationGrid(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Nav
 	NavGrid = make([][]Cell, len(puzzleGrid))
 	acrosses := puzzle.AcrossClues
 	downs := puzzle.DownClues
+	// Initialize current to last clue so black squares before first clue get correct adjacent clues
 	currentAcrossIndex := len(acrosses) - 1 
 	currentDownIndex := len(downs) - 1
 	prevAcross := acrosses[len(acrosses) - 1]
@@ -48,8 +49,6 @@ func NewNavigationGrid(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Nav
 			}
 			cell := Cell{
 				content: puzzleGrid[row][col], 
-					content: puzzleGrid[row][col], 
-				content: puzzleGrid[row][col], 
 				prevAcross: prevAcross.Num,
 				nextAcross: nextAcross.Num,
 				prevDown: prevDown.Num,
@@ -57,7 +56,11 @@ func NewNavigationGrid(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Nav
 			}
 			if cell.content != "." {
 				cell.acrossClue = acrosses[currentAcrossIndex].Num
-				cell.downClue = downs[currentDownIndex].Num
+				if row > 0 && NavGrid[row - 1][col].content != "." {
+					cell.downClue = NavGrid[row - 1][col].downClue
+				} else {
+					cell.downClue = downs[currentDownIndex].Num
+				}
 			}
 			NavGrid[row][col] = cell
 		}

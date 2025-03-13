@@ -14,22 +14,11 @@ type mainModel struct {
 	title string
 	author string
 	copyright string
-	clues cluesModel
+	clues tea.Model
 	grid tea.Model
-	cursorX int
-	cursorY int
 }
 
 func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
-	var initialX int
-	var initialY int
-	for i, char := range puz.CurrentState {
-		if char != '.' {
-			initialX = i % puz.NumCols
-			initialY = i / puz.NumCols
-			break
-		}
-	}
 	grid := initGridModel(puz)
 	clues := initCluesModel(puz)
 
@@ -39,8 +28,6 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 		copyright: puz.Copyright,
 		grid: grid,
 		clues: clues,
-		cursorX: initialX,
-		cursorY: initialY,
 	}
 }
 
@@ -57,6 +44,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	m.grid, _ = m.grid.Update(msg)
+	m.clues, _ = m.clues.Update(msg)
 	return m, nil
 }
 

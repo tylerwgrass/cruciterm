@@ -53,6 +53,8 @@ func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
 		}
 	}
 	navGrid := NewNavigationGrid(grid, puz)
+	currentAcrossClue = (*navGrid)[initialY][initialX].acrossClue
+	currentDownClue = (*navGrid)[initialY][initialX].downClue
 	return gridModel{
 		Grid: grid,
 		navGrid: navGrid,
@@ -112,6 +114,8 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
     }
 		m.validateSolution()
+		currentAcrossClue = (*m.navGrid)[m.cursorY][m.cursorX].acrossClue
+		currentDownClue = (*m.navGrid)[m.cursorY][m.cursorX].downClue
     return m, nil
 }
 
