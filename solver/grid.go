@@ -113,13 +113,17 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.changeNavOrientation()
 				}
 			case "up":
-				m.handleCardinal(Vertical, Reverse)
+				var h ValidSquareHalter
+				m.cursorY, m.cursorX, _ = m.navGrid.advanceCursor(m.cursorX, m.cursorY, Vertical, Reverse, h, Cardinal)
 			case "down":
-				m.handleCardinal(Vertical, Forward)
+				var h ValidSquareHalter
+				m.cursorY, m.cursorX, _ = m.navGrid.advanceCursor(m.cursorX, m.cursorY, Vertical, Forward, h, Cardinal)
 			case "left":
-				m.handleCardinal(Horizontal, Reverse)
+				var h ValidSquareHalter
+				m.cursorY, m.cursorX, _ = m.navGrid.advanceCursor(m.cursorX, m.cursorY, Horizontal, Reverse, h, Cardinal)
 			case "right":
-				m.handleCardinal(Horizontal, Forward)
+				var h ValidSquareHalter
+				m.cursorY, m.cursorX, _ = m.navGrid.advanceCursor(m.cursorX, m.cursorY, Horizontal, Forward, h, Cardinal)
 			}
     }
 		m.validateSolution()

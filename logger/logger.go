@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -16,6 +15,5 @@ func SetLogFile(f *os.File) {
 }
 
 func Debug(msg string) {
-	fmt.Println(logger)
 	logger.logFile.WriteString(msg)
 }
