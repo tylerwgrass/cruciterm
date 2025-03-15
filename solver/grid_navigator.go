@@ -1,6 +1,8 @@
 package solver
 
 import (
+	"fmt"
+
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
@@ -15,6 +17,17 @@ type Cell struct {
 	prevDown int
 }
 
+type IterationMode int
+const (
+	Clues IterationMode = iota
+	Cardinal
+)
+
+type NavigationDeltas struct {
+	dr int
+	dc int
+}
+
 type NavigationGrid [][]Cell
 var NavGrid NavigationGrid
 
@@ -26,9 +39,8 @@ func NewNavigationGrid(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Nav
 	NavGrid = make([][]Cell, len(puzzleGrid))
 	acrosses := puzzle.AcrossClues
 	downs := puzzle.DownClues
-	// Initialize current to last clue so black squares before first clue get correct adjacent clues
-	currentAcrossIndex := len(acrosses) - 1 
-	currentDownIndex := len(downs) - 1
+	currentAcrossIndex := 0
+	currentDownIndex := 0
 	prevAcross := acrosses[len(acrosses) - 1]
 	nextAcross := acrosses[(currentAcrossIndex + 1) % len(acrosses)]
 	prevDown := downs[len(downs) - 1]
@@ -49,12 +61,12 @@ func NewNavigationGrid(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Nav
 			}
 			cell := Cell{
 				content: puzzleGrid[row][col], 
-				prevAcross: prevAcross.Num,
-				nextAcross: nextAcross.Num,
-				prevDown: prevDown.Num,
-				nextDown: nextDown.Num,
 			}
 			if cell.content != "." {
+				cell.prevAcross = prevAcross.Num
+				cell.nextAcross = nextAcross.Num
+				cell.prevDown = prevDown.Num
+				cell.nextDown = nextDown.Num
 				cell.acrossClue = acrosses[currentAcrossIndex].Num
 				if row > 0 && NavGrid[row - 1][col].content != "." {
 					cell.downClue = NavGrid[row - 1][col].downClue
@@ -153,9 +165,12 @@ func (grid NavigationGrid) advanceVertical(initX, initY, delta int, halter NavHa
 	return initX, initY, false
 }
 
-func (grid NavigationGrid) advanceCursor(startX, startY int, or Orientation, dir Direction) (int, int, bool) {
-	var h ValidSquareHalter
-	return grid.advanceCursorWithNavigator(startX, startY, or, dir, h)
+func (grid NavigationGrid) advanceCursor(startCol, startRow int, or Orientation, dir Direction, h NavHalter, iterMode IterationMode) (int, int, bool) {
+	if iterMode == Cardinal {
+		return grid.advanceCursorWithNavigator(startCol, startRow, or, dir, h)
+	} else {
+		return grid.iterateClues(startRow, startCol, or, dir, h)
+	}
 }
 
 func (grid NavigationGrid) advanceCursorWithNavigator(startX, startY int, or Orientation, dir Direction, halter NavHalter) (int, int, bool) {
@@ -196,4 +211,93 @@ func (grid NavigationGrid) advanceClue(startX, startY int, or Orientation, dir D
 	}
 	nextClue := puzzle.Clues[nextClueNum]
 	return nextClue.StartX, nextClue.StartY, didWrap
+}
+
+func (grid NavigationGrid) iterateClues(startRow int, startCol int, or Orientation, dir Direction, halter NavHalter) (row int, col int, didWrap bool) {
+	currentRow, currentCol := startRow, startCol
+	didWrap = false
+	deltas := getDeltas(or, dir)
+	for {
+		if didWrap && currentRow == startRow && currentCol == startCol {
+			break
+		} 
+		nextRow, nextCol := currentRow + deltas.dr, currentCol + deltas.dc
+		if grid.isVisitable(nextRow, nextCol) {
+			currentRow = nextRow
+			currentCol = nextCol
+		} else {
+			var didWrapGrid bool
+			currentRow, currentCol, didWrapGrid = grid.getNextClueLocation(currentRow, currentCol, or, dir)
+			didWrap = didWrap || didWrapGrid
+		} 
+		if halter.Halt(&grid, currentRow, currentCol) {
+			return currentRow, currentCol, didWrap
+		}
+	}
+
+	return startRow, startCol, false
+} 
+
+func (grid NavigationGrid) getNextClueLocation(startRow int, startCol int, or Orientation, dir Direction) (row int, col int, didWrap bool) {
+	currentClue := grid[startRow][startCol]
+	var nextClueNum int
+	if or == Horizontal {
+		if dir == Forward {
+			nextClueNum = currentClue.nextAcross 
+			didWrap = nextClueNum < currentClue.acrossClue
+		} else {
+			nextClueNum = currentClue.prevAcross
+			didWrap = nextClueNum > currentClue.acrossClue
+		}
+	} else {
+		if dir == Forward {
+			nextClueNum = currentClue.nextDown
+			didWrap = nextClueNum < currentClue.downClue
+		} else {
+			nextClueNum = currentClue.prevDown
+			didWrap = nextClueNum > currentClue.downClue
+		}
+	}
+	nextClue := puzzle.Clues[nextClueNum]
+	row = nextClue.StartY
+	col = nextClue.StartX
+	return 
+}
+
+func (grid NavigationGrid) isVisitable(row int, col int) bool {
+	return row < len(grid) &&
+		col < len(grid[0]) &&
+		row >= 0 &&
+		col >= 0 &&
+		grid[row][col].content != "."
+}
+
+func getDeltas(or Orientation, dir Direction) NavigationDeltas {
+	var deltas NavigationDeltas
+	if or == Horizontal {
+		if dir == Forward {
+			deltas.dc = 1
+		} else {
+			deltas.dc = -1
+		}
+	} else {
+		if dir == Forward {
+			deltas.dr = 1
+		} else {
+			deltas.dr = -1
+		}
+	}
+	return deltas
+}
+
+func (c Cell) ToString() string {
+	return fmt.Sprintf("{val:%s, acrossClueNum:%d, downClueNum:%d, nextAcrossNum:%d, nextDownNum:%d, prevAcrossNum:%d, prevDownNum:%d}\n",
+		c.content,
+		c.acrossClue,
+		c.downClue,
+		c.nextAcross,
+		c.nextDown,
+		c.prevAcross,
+		c.prevDown,
+	)
 }

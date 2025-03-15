@@ -81,10 +81,11 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
 				m.Grid[m.cursorY][m.cursorX] = strings.ToUpper(string(msg.Runes[0]))
 				(*m.navGrid)[m.cursorY][m.cursorX].content = strings.ToUpper(string(msg.Runes[0]))
-				m.cursorX, m.cursorY, didWrap = m.navGrid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Forward); 
+				var h ValidSquareHalter
+				m.cursorY, m.cursorX, didWrap = m.navGrid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Forward, h, Clues); 
 				if m.Grid[m.cursorY][m.cursorX] != "-" && prefs.GetBool(prefs.JumpToEmptySquare) {
-					var h EmptySquareHalter
-					m.cursorX, m.cursorY, didWrap = m.navGrid.advanceCursorWithNavigator(m.cursorX, m.cursorY, m.navOrientation, Forward, h)
+					var e EmptySquareHalter
+					m.cursorY, m.cursorX, didWrap = m.navGrid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Forward, e, Clues)
 				}
 				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					m.changeNavOrientation()	
@@ -93,9 +94,12 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			switch msg.String() {
+			// TODO: moves to start of prev clue instead of end
 			case "backspace":
 				m.Grid[m.cursorY][m.cursorX] = "-"
-				m.navGrid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Reverse)
+				(*m.navGrid)[m.cursorY][m.cursorX].content = "-"
+				var h ValidSquareHalter
+				m.cursorY, m.cursorX, _ = m.navGrid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Reverse, h, Clues)
 			case " ":
 				m.changeNavOrientation()
 			case "shift+tab":
@@ -174,7 +178,8 @@ func (m *gridModel) handleCardinal(o Orientation, d Direction) {
 	if swapCursor && m.navOrientation != o {
 		m.changeNavOrientation()
 	} else {
-		m.cursorX, m.cursorY, _ = m.navGrid.advanceCursor(m.cursorX, m.cursorY, o, d)
+		var h ValidSquareHalter
+		m.cursorX, m.cursorY, _ = m.navGrid.advanceCursor(m.cursorX, m.cursorY, o, d, h, Cardinal)
 	}
 }
 

@@ -31,6 +31,7 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	}
 }
 
+var debugFile *os.File
 func (m mainModel) Init() tea.Cmd {
 	return nil
 }
@@ -63,6 +64,16 @@ func (m mainModel) View() string {
 }
 
 func Run(puz *puzzle.PuzzleDefinition) {
+	f, err := tea.LogToFile("debug.log", "debug")
+	if err != nil {
+		fmt.Println("fatal:", err)
+		os.Exit(1)
+	}
+	os.Truncate("debug.log", 0)
+	debugFile = f
+	defer f.Close()
+	f.WriteString(fmt.Sprintf("Puzzle loaded:\n%s", puz.ToString()))
+	f.WriteString("Running!\n")
 	p := tea.NewProgram(initMainModel(puz))
 	if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)

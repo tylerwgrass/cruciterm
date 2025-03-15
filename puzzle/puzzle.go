@@ -1,5 +1,7 @@
 package puzzle
 
+import "fmt"
+
 type PuzzleDefinition struct {
 	Title string
 	Author string
@@ -66,4 +68,23 @@ func (puz * PuzzleDefinition) AssignClues(clues []string) {
 		clueNum++
 	}
 	puz.Clues = Clues
+}
+
+func (p PuzzleDefinition) ToString() string {
+	output := "Clues:\n"
+	for i := range(p.NumClues) {
+		output += fmt.Sprintf("%s\n", p.Clues[i].ToString())
+	}
+
+	return output
+}
+
+func (c Clue) ToString() string {
+	return fmt.Sprintf("Clue{num: %d, r: %d, c:%d, acrossClue: %s, downClue: %s}", 
+		c.Num,
+		c.StartY,
+		c.StartX,
+		c.AcrossClue,
+		c.DownClue,	
+	)
 }
