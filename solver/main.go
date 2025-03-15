@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tylerwgrass/cruciterm/puzzle"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tylerwgrass/cruciterm/logger"
+	"github.com/tylerwgrass/cruciterm/puzzle"
 )
 
 type mainModel struct {
@@ -31,7 +31,6 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	}
 }
 
-var debugFile *os.File
 func (m mainModel) Init() tea.Cmd {
 	return nil
 }
@@ -70,10 +69,10 @@ func Run(puz *puzzle.PuzzleDefinition) {
 		os.Exit(1)
 	}
 	os.Truncate("debug.log", 0)
-	debugFile = f
+	logger.SetLogFile(f)
 	defer f.Close()
-	f.WriteString(fmt.Sprintf("Puzzle loaded:\n%s", puz.ToString()))
-	f.WriteString("Running!\n")
+	logger.Debug("Running!\n")
+
 	p := tea.NewProgram(initMainModel(puz))
 	if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
