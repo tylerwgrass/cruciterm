@@ -3,7 +3,6 @@ package solver
 import (
 	"fmt"
 
-	"github.com/tylerwgrass/cruciterm/logger"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
@@ -147,7 +146,6 @@ func (grid NavigationGrid) iterateCardinal(startRow, startCol int, or Orientatio
 			break
 		}
 		nextRow, nextCol := currentRow + deltas.dr, currentCol + deltas.dc
-		logger.Debug(fmt.Sprintf("Current Cell: [%d, %d]. Next Cell: [%d, %d]\n", currentRow, currentCol, nextRow, nextCol))
 		if grid.isVisitable(nextRow, nextCol) {
 			currentRow = nextRow
 			currentCol = nextCol
@@ -156,7 +154,6 @@ func (grid NavigationGrid) iterateCardinal(startRow, startCol int, or Orientatio
 			currentRow, currentCol, didWrapGrid = grid.getNextCardinalCell(currentRow, currentCol, or, dir)
 			didWrap = didWrap || didWrapGrid
 		} 
-		logger.Debug(fmt.Sprintf("Validating at cell [%d, %d]", currentRow, currentCol))
 		if halter.Halt(&grid, currentRow, currentCol) {
 			return currentRow, currentCol, didWrap
 		}
@@ -192,64 +189,53 @@ func (grid NavigationGrid) iterateClues(startRow int, startCol int, or Orientati
 func (grid NavigationGrid) getNextCardinalCell(startRow, startCol int, or Orientation, dir Direction) (row, col int, didWrap bool) {
 	row, col, didWrap = startRow, startCol, false
 	deltas := getDeltas(or, dir)
-	nextRow, nextCol := startRow + deltas.dr, startCol + deltas.dc
-	if nextRow < 0 {
-		nextRow = len(grid) - 1
-	}
-	if nextCol < 0 {
-		nextCol = len(grid[0]) - 1
-	}
-	nextCol = nextCol % len(grid[0])
-	nextRow = nextRow % len(grid)
-	for ok := true; ok; ok = !grid.isVisitable(nextRow, nextCol)  {
-			if or == Horizontal {
-				if dir == Forward {
-					if nextCol < col {
-						row++
-						col = 0 
-					} else {
-						col++
-					}
-				} else {
-					if nextCol > col {
-						row--
-						col = len(grid[0]) - 1
-						didWrap = true
-					} else {
-						col--
-					}
+
+	for ok := true; ok; ok = !grid.isVisitable(row, col) {
+		nextRow, nextCol := row + deltas.dr, col + deltas.dc
+		if nextRow < 0 {
+			nextRow = len(grid) - 1
+		}
+		if nextCol < 0 {
+			nextCol = len(grid[0]) - 1
+		}
+		nextCol = nextCol % len(grid[0])
+		nextRow = nextRow % len(grid)
+		if or == Horizontal {
+			if dir == Forward {
+				if nextCol < col {
+					row++
+					col = 0 
+					didWrap = true
+					continue
 				}
 			} else {
-				if dir == Forward {
-					if nextRow < row {
-						col++
-						row = 0
-						didWrap = true
-					} else {
-						row++
-					}
-				} else {
-					if nextRow > row {
-						col--
-						row = len(grid) - 1
-						didWrap = true
-					} else {
-						row--
-					}
+				if nextCol > col {
+					row--
+					col = len(grid[0]) - 1
+					didWrap = true
+					continue
 				}
 			}
-			nextRow = row + deltas.dr
-			nextCol = col + deltas.dc
-			if nextRow < 0 {
-				nextRow = len(grid) - 1
+		} else {
+			if dir == Forward {
+				if nextRow < row {
+					col++
+					row = 0
+					didWrap = true
+					continue
+				}
+			} else {
+				if nextRow > row {
+					col--
+					row = len(grid) - 1
+					didWrap = true
+					continue
+				}
 			}
-			if nextCol < 0 {
-				nextCol = len(grid[0]) - 1
-			}
-			nextCol = nextCol % len(grid[0])
-			nextRow = nextRow % len(grid)
+		}
+		row, col = nextRow, nextCol
 	}
-	return nextRow, nextCol, didWrap
+	return row, col, didWrap
 }
 
 func (grid NavigationGrid) getNextClueLocation(startRow int, startCol int, or Orientation, dir Direction) (row int, col int, didWrap bool) {

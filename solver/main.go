@@ -71,7 +71,6 @@ func Run(puz *puzzle.PuzzleDefinition) {
 	os.Truncate("debug.log", 0)
 	logger.SetLogFile(f)
 	defer f.Close()
-	logger.Debug("Running!\n")
 
 	p := tea.NewProgram(initMainModel(puz))
 	if _, err := p.Run(); err != nil {
