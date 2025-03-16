@@ -23,7 +23,7 @@ const (
 )
 
 type gridModel struct {
-	grid *NavigationGrid
+	navigator *Navigator	
 	solution string
 	solved bool
 	cursorX int
@@ -51,11 +51,12 @@ func initGridModel(puz *puzzle.PuzzleDefinition) gridModel {
 			}
 		}
 	}
-	grid := NewNavigationGrid(basicGrid, puz)
+	navigator := NewNavigator(basicGrid, puz)
+	grid := navigator.grid
 	currentAcrossClue = (*grid)[initialY][initialX].acrossClue
 	currentDownClue = (*grid)[initialY][initialX].downClue
 	return gridModel{
-		grid: grid,
+		navigator: navigator,
 		solved: solved,
 		solution: puz.Answer,
 		cursorX: initialX,
@@ -77,12 +78,22 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			var didWrap bool
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
-				(*m.grid)[m.cursorY][m.cursorX].content = strings.ToUpper(string(msg.Runes[0]))
+				(*m.navigator.grid)[m.cursorY][m.cursorX].content = strings.ToUpper(string(msg.Runes[0]))
 				var h ValidSquareHalter
-				m.cursorY, m.cursorX, didWrap = m.grid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Forward, h, Clues); 
-				if (*m.grid)[m.cursorY][m.cursorX].content != "-" && prefs.GetBool(prefs.JumpToEmptySquare) {
+				m.cursorY, m.cursorX, didWrap = m.navigator.
+					withOrientation(m.navOrientation).
+					withDirection(Forward).
+					withIterMode(Clues).
+					withHalter(h).
+					advanceCursor(m.cursorX, m.cursorY)
+				if (*m.navigator.grid)[m.cursorY][m.cursorX].content != "-" && prefs.GetBool(prefs.JumpToEmptySquare) {
 					var e EmptySquareHalter
-					m.cursorY, m.cursorX, didWrap = m.grid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Forward, e, Clues)
+					m.cursorY, m.cursorX, didWrap = m.navigator.
+						withOrientation(m.navOrientation).
+						withDirection(Forward).
+						withHalter(e).
+						withIterMode(Clues).
+						advanceCursor(m.cursorX, m.cursorY)
 				}
 				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					m.changeNavOrientation()	
@@ -93,38 +104,63 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			// TODO: moves to start of prev clue instead of end
 			case "backspace":
-				(*m.grid)[m.cursorY][m.cursorX].content = "-"
+				(*m.navigator.grid)[m.cursorY][m.cursorX].content = "-"
 				var h ValidSquareHalter
-				m.cursorY, m.cursorX, _ = m.grid.advanceCursor(m.cursorX, m.cursorY, m.navOrientation, Reverse, h, Clues)
+				m.cursorY, m.cursorX, _ = m.navigator.
+					withOrientation(m.navOrientation).
+					withDirection(Reverse).
+					withHalter(h).
+					withIterMode(Clues).
+					advanceCursor(m.cursorX, m.cursorY)
 			case " ":
 				m.changeNavOrientation()
 			case "shift+tab":
-				m.cursorX, m.cursorY, didWrap = m.grid.advanceClue(m.cursorX, m.cursorY, m.navOrientation, Reverse)
-				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-					m.changeNavOrientation()
-				}
+				m.cursorX, m.cursorY, _ = m.navigator.
+					withOrientation(m.navOrientation).
+					withDirection(Reverse).
+					advanceClue(m.cursorX, m.cursorY)
 			case "tab":
-				m.cursorX, m.cursorY, didWrap = m.grid.advanceClue(m.cursorX, m.cursorY, m.navOrientation, Forward)
-				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-					m.changeNavOrientation()
-				}
+				m.cursorX, m.cursorY, _ = m.navigator.
+					withOrientation(m.navOrientation).
+					withDirection(Forward).
+					advanceClue(m.cursorX, m.cursorY)
 			case "up":
 				var h ValidSquareHalter
-				m.cursorY, m.cursorX, _ = m.grid.advanceCursor(m.cursorX, m.cursorY, Vertical, Reverse, h, Cardinal)
+				m.cursorY, m.cursorX, _ = m.navigator.
+					withOrientation(Vertical).	
+					withDirection(Reverse).
+					withHalter(h).
+					withIterMode(Cardinal).
+					advanceCursor(m.cursorX, m.cursorY)
 			case "down":
 				var h ValidSquareHalter
-				m.cursorY, m.cursorX, _ = m.grid.advanceCursor(m.cursorX, m.cursorY, Vertical, Forward, h, Cardinal)
+				m.cursorY, m.cursorX, _ = m.navigator.
+					withOrientation(Vertical).	
+					withDirection(Forward).
+					withHalter(h).
+					withIterMode(Cardinal).
+					advanceCursor(m.cursorX, m.cursorY)
 			case "left":
 				var h ValidSquareHalter
-				m.cursorY, m.cursorX, _ = m.grid.advanceCursor(m.cursorX, m.cursorY, Horizontal, Reverse, h, Cardinal)
+				m.cursorY, m.cursorX, _ = m.navigator.
+					withOrientation(Horizontal).	
+					withDirection(Reverse).
+					withHalter(h).
+					withIterMode(Cardinal).
+					advanceCursor(m.cursorX, m.cursorY)
 			case "right":
 				var h ValidSquareHalter
-				m.cursorY, m.cursorX, _ = m.grid.advanceCursor(m.cursorX, m.cursorY, Horizontal, Forward, h, Cardinal)
+				m.cursorY, m.cursorX, _ = m.navigator.
+					withOrientation(Horizontal).	
+					withDirection(Forward).
+					withHalter(h).
+					withIterMode(Cardinal).
+					advanceCursor(m.cursorX, m.cursorY)
 			}
     }
 		m.validateSolution()
-		currentAcrossClue = (*m.grid)[m.cursorY][m.cursorX].acrossClue
-		currentDownClue = (*m.grid)[m.cursorY][m.cursorX].downClue
+		currentAcrossClue = (*m.navigator.grid)[m.cursorY][m.cursorX].acrossClue
+		currentDownClue = (*m.navigator.grid)[m.cursorY][m.cursorX].downClue
     return m, nil
 }
 
@@ -137,7 +173,7 @@ func (m gridModel) View() string {
 		cursor = "v" 
 	}
 	cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Render(cursor)
-	for i, row := range *m.grid {
+	for i, row := range *m.navigator.grid {
 		sb.WriteString(" ")
 		for j, cell := range row {
 			if i == m.cursorY && j == m.cursorX {
@@ -157,7 +193,7 @@ func (m gridModel) View() string {
 				sb.WriteString(cell.content + " ")
 			} 
 		}
-		if i < len(*m.grid) - 1 {
+		if i < len(*m.navigator.grid) - 1 {
 			sb.WriteString("\n")
 		}
 	}
@@ -174,7 +210,7 @@ func (m *gridModel) changeNavOrientation() {
 }
 
 func (m *gridModel) validateSolution() {
-	grid := *m.grid
+	grid := *m.navigator.grid
 	numRows := len(grid)
 	numCols := len(grid[0])
 	for i := 0; i < numRows; i++ {
