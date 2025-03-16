@@ -15,5 +15,6 @@ func SetLogFile(f *os.File) {
 }
 
 func Debug(msg string) {
+	msg += "\n"
 	logger.logFile.WriteString(msg)
 }
