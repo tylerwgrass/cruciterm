@@ -115,13 +115,13 @@ func (n *Navigator) withIterMode(i IterationMode) *Navigator {
 
 func (navigator Navigator) advanceCursor(startCol, startRow int) (int, int, bool) {
 	didWrap := false
-	var row, col int
+	row, col := startRow, startCol
 	for _, halter := range(navigator.halters) {
 		if navigator.iterMode == Cardinal {
-			iterRow, iterCol, didCurrentWrap := navigator.iterateCardinal(startRow, startCol, halter)
+			iterRow, iterCol, didCurrentWrap := navigator.iterateCardinal(row, col, halter)
 			row, col, didWrap = iterRow, iterCol, didWrap || didCurrentWrap
 		} else {
-			iterRow, iterCol, didCurrentWrap := navigator.iterateClues(startRow, startCol, halter)
+			iterRow, iterCol, didCurrentWrap := navigator.iterateClues(row, col, halter)
 			row, col, didWrap = iterRow, iterCol, didWrap || didCurrentWrap
 		}
 	}
@@ -158,7 +158,7 @@ func (navigator Navigator) advanceClue(startX, startY int) (int, int, bool) {
 		}
 	}
 	nextClue := puzzle.Clues[nextClueNum]
-	return nextClue.StartX, nextClue.StartY, didWrap
+	return nextClue.StartY, nextClue.StartX, didWrap
 }
 
 func (navigator Navigator) iterateCardinal(startRow, startCol int, halter IHalter) (row, col int, didWrap bool) {
@@ -226,42 +226,49 @@ func (navigator Navigator) getNextCardinalCell(startRow, startCol int) (row, col
 		nextRow, nextCol := row + deltas.dr, col + deltas.dc
 		if nextRow < 0 {
 			nextRow = len(grid) - 1
+		} else if nextRow == len(grid) {
+			nextRow = 0
 		}
 		if nextCol < 0 {
 			nextCol = len(grid[0]) - 1
+		} else if nextCol == len(grid[0]) {
+			nextCol = 0
 		}
-		nextCol = nextCol % len(grid[0])
-		nextRow = nextRow % len(grid)
+
 		if navigator.orientation == Horizontal {
 			if navigator.direction == Forward {
 				if nextCol < col {
-					row++
-					col = 0 
-					didWrap = true
-					continue
+					nextRow++
+					if nextRow == len(grid) {
+						nextRow = 0
+						didWrap = true
+					}
 				}
 			} else {
 				if nextCol > col {
-					row--
-					col = len(grid[0]) - 1
-					didWrap = true
-					continue
+					nextRow--
+					if nextRow == -1 {
+						nextRow = len(grid) - 1
+						didWrap = true
+					}
 				}
 			}
 		} else {
 			if navigator.direction == Forward {
 				if nextRow < row {
-					col++
-					row = 0
-					didWrap = true
-					continue
+					nextCol++
+					if nextCol == len(grid[0]) {
+						nextCol = 0
+						didWrap = true
+					}
 				}
 			} else {
 				if nextRow > row {
-					col--
-					row = len(grid) - 1
-					didWrap = true
-					continue
+					nextCol--
+					if nextCol == -1 {
+						nextCol = len(grid[0]) - 1
+						didWrap = true
+					}
 				}
 			}
 		}

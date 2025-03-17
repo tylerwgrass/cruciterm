@@ -1,5 +1,11 @@
 package solver
 
+import (
+	"fmt"
+
+	"github.com/tylerwgrass/cruciterm/logger"
+)
+
 type IHalter interface {
 	Halt(*NavigationGrid, int, int) bool
 	CheckInitialSquare() bool
@@ -27,6 +33,7 @@ func makeHalter(hType halterType, checkInitialSquare bool) IHalter {
 
 type ValidSquareHalter Halter
 func (h ValidSquareHalter) Halt(g *NavigationGrid, i, j int) bool {
+	logger.Debug(fmt.Sprintf("Checking valid square at [%d,%d]: %s", i, j, (*g)[i][j].content))
 	return (*g)[i][j].content != "." 
 }
 
