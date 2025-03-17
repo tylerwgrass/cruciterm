@@ -30,31 +30,12 @@ type Navigator struct {
 	orientation Orientation
 	direction Direction
 	iterMode IterationMode
-	halter NavHalter
+	halter IHalter
 }
 
 type NavigationDeltas struct {
 	dr int
 	dc int
-}
-
-type NavHalter interface {
-	Halt(*NavigationGrid, int, int) bool
-}
-
-type ValidSquareHalter func(g *NavigationGrid, i, j int) bool
-func (h ValidSquareHalter) Halt(g *NavigationGrid, i, j int) bool {
-	return (*g)[i][j].content != "."
-}
-
-type BlackSquareHalter func(g *NavigationGrid, i, j int) bool
-func (h BlackSquareHalter) Halt(g *NavigationGrid, i, j int) bool {
-	return (*g)[i][j].content == "."
-}
-
-type EmptySquareHalter func(g *NavigationGrid, i, j int) bool
-func (h EmptySquareHalter) Halt(g *NavigationGrid, i, j int) bool {
-	return (*g)[i][j].content == "-"
 }
 
 func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigator {
@@ -117,7 +98,7 @@ func (n *Navigator) withDirection(d Direction) *Navigator {
 	return n 
 }
 
-func (n *Navigator) withHalter(h NavHalter) *Navigator {
+func (n *Navigator) withHalter(h IHalter) *Navigator {
 	n.halter = h
 	return n
 }
@@ -174,10 +155,13 @@ func (navigator Navigator) advanceClue(startX, startY int) (int, int, bool) {
 }
 
 func (navigator Navigator) iterateCardinal(startRow, startCol int) (row, col int, didWrap bool) {
+	grid := *navigator.grid
+	if navigator.halter.CheckInitialSquare() && navigator.halter.Halt(&grid, startRow, startCol) {
+		return startRow, startCol, false
+	}
 	currentRow, currentCol := startRow, startCol
 	didWrap = false
 	deltas := navigator.getDeltas()
-	grid := *navigator.grid
 	for {
 		if didWrap && currentRow == startRow && currentCol == startCol {
 			break
@@ -199,10 +183,13 @@ func (navigator Navigator) iterateCardinal(startRow, startCol int) (row, col int
 }
 
 func (navigator Navigator) iterateClues(startRow int, startCol int) (row int, col int, didWrap bool) {
+	grid := *navigator.grid
+	if navigator.halter.CheckInitialSquare() && navigator.halter.Halt(&grid, startRow, startCol) {
+		return startRow, startCol, false
+	}
 	currentRow, currentCol := startRow, startCol
 	didWrap = false
 	deltas := navigator.getDeltas()
-	grid := *navigator.grid
 	for {
 		if didWrap && currentRow == startRow && currentCol == startCol {
 			break

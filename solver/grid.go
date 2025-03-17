@@ -79,19 +79,18 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var didWrap bool
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = strings.ToUpper(string(msg.Runes[0]))
-				var h ValidSquareHalter
 				m.cursorY, m.cursorX, didWrap = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Forward).
 					withIterMode(Clues).
-					withHalter(h).
+					withHalter(makeHalter(ValidSquare, false)).
 					advanceCursor(m.cursorX, m.cursorY)
 				if (*m.navigator.grid)[m.cursorY][m.cursorX].content != "-" && prefs.GetBool(prefs.JumpToEmptySquare) {
 					var e EmptySquareHalter
 					m.cursorY, m.cursorX, didWrap = m.navigator.
 						withOrientation(m.navOrientation).
 						withDirection(Forward).
-						withHalter(e).
+						withHalter(makeHalter(EmptySquare, true)).
 						withIterMode(Clues).
 						advanceCursor(m.cursorX, m.cursorY)
 				}
@@ -105,11 +104,10 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// TODO: moves to start of prev clue instead of end
 			case "backspace":
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = "-"
-				var h ValidSquareHalter
 				m.cursorY, m.cursorX, _ = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Reverse).
-					withHalter(h).
+					withHalter(makeHalter(ValidSquare, false)).
 					withIterMode(Clues).
 					advanceCursor(m.cursorX, m.cursorY)
 			case " ":
@@ -125,35 +123,31 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withDirection(Forward).
 					advanceClue(m.cursorX, m.cursorY)
 			case "up":
-				var h ValidSquareHalter
 				m.cursorY, m.cursorX, _ = m.navigator.
 					withOrientation(Vertical).	
 					withDirection(Reverse).
-					withHalter(h).
+					withHalter(makeHalter(ValidSquare, false)).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "down":
-				var h ValidSquareHalter
 				m.cursorY, m.cursorX, _ = m.navigator.
 					withOrientation(Vertical).	
 					withDirection(Forward).
-					withHalter(h).
+					withHalter(makeHalter(ValidSquare, false)).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "left":
-				var h ValidSquareHalter
 				m.cursorY, m.cursorX, _ = m.navigator.
 					withOrientation(Horizontal).	
 					withDirection(Reverse).
-					withHalter(h).
+					withHalter(makeHalter(ValidSquare, false)).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "right":
-				var h ValidSquareHalter
 				m.cursorY, m.cursorX, _ = m.navigator.
 					withOrientation(Horizontal).	
 					withDirection(Forward).
-					withHalter(h).
+					withHalter(makeHalter(ValidSquare, false)).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			}
