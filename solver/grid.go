@@ -83,17 +83,8 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withOrientation(m.navOrientation).
 					withDirection(Forward).
 					withIterMode(Clues).
-					withHalter(makeHalter(ValidSquare, false)).
+					withHalters([]IHalter{makeHalter(ValidSquare, false), makeHalter(EmptySquare, true)}).
 					advanceCursor(m.cursorX, m.cursorY)
-				if (*m.navigator.grid)[m.cursorY][m.cursorX].content != "-" && prefs.GetBool(prefs.JumpToEmptySquare) {
-					var e EmptySquareHalter
-					m.cursorY, m.cursorX, didWrap = m.navigator.
-						withOrientation(m.navOrientation).
-						withDirection(Forward).
-						withHalter(makeHalter(EmptySquare, true)).
-						withIterMode(Clues).
-						advanceCursor(m.cursorX, m.cursorY)
-				}
 				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					m.changeNavOrientation()	
 				} 

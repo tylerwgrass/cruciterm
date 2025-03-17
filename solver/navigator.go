@@ -30,7 +30,7 @@ type Navigator struct {
 	orientation Orientation
 	direction Direction
 	iterMode IterationMode
-	halter IHalter
+	halters []IHalter
 }
 
 type NavigationDeltas struct {
@@ -99,7 +99,12 @@ func (n *Navigator) withDirection(d Direction) *Navigator {
 }
 
 func (n *Navigator) withHalter(h IHalter) *Navigator {
-	n.halter = h
+	n.halters = []IHalter{h}
+	return n
+}
+
+func (n *Navigator) withHalters(h []IHalter) *Navigator {
+	n.halters = h
 	return n
 }
 
@@ -111,13 +116,15 @@ func (n *Navigator) withIterMode(i IterationMode) *Navigator {
 func (navigator Navigator) advanceCursor(startCol, startRow int) (int, int, bool) {
 	didWrap := false
 	var row, col int
+	for _, halter := range(navigator.halters) {
 		if navigator.iterMode == Cardinal {
-			iterRow, iterCol, didCurrentWrap := navigator.iterateCardinal(startRow, startCol)
+			iterRow, iterCol, didCurrentWrap := navigator.iterateCardinal(startRow, startCol, halter)
 			row, col, didWrap = iterRow, iterCol, didWrap || didCurrentWrap
 		} else {
-			iterRow, iterCol, didCurrentWrap := navigator.iterateClues(startRow, startCol)
+			iterRow, iterCol, didCurrentWrap := navigator.iterateClues(startRow, startCol, halter)
 			row, col, didWrap = iterRow, iterCol, didWrap || didCurrentWrap
 		}
+	}
 	return row, col, didWrap
 }
 
@@ -154,9 +161,9 @@ func (navigator Navigator) advanceClue(startX, startY int) (int, int, bool) {
 	return nextClue.StartX, nextClue.StartY, didWrap
 }
 
-func (navigator Navigator) iterateCardinal(startRow, startCol int) (row, col int, didWrap bool) {
+func (navigator Navigator) iterateCardinal(startRow, startCol int, halter IHalter) (row, col int, didWrap bool) {
 	grid := *navigator.grid
-	if navigator.halter.CheckInitialSquare() && navigator.halter.Halt(&grid, startRow, startCol) {
+	if halter.CheckInitialSquare() && halter.Halt(&grid, startRow, startCol) {
 		return startRow, startCol, false
 	}
 	currentRow, currentCol := startRow, startCol
@@ -175,16 +182,16 @@ func (navigator Navigator) iterateCardinal(startRow, startCol int) (row, col int
 			currentRow, currentCol, didWrapGrid = navigator.getNextCardinalCell(currentRow, currentCol)
 			didWrap = didWrap || didWrapGrid
 		} 
-		if navigator.halter.Halt(&grid, currentRow, currentCol) {
+		if halter.Halt(&grid, currentRow, currentCol) {
 			return currentRow, currentCol, didWrap
 		}
 	}
 	return startRow, startCol, false
 }
 
-func (navigator Navigator) iterateClues(startRow int, startCol int) (row int, col int, didWrap bool) {
+func (navigator Navigator) iterateClues(startRow int, startCol int, halter IHalter) (row int, col int, didWrap bool) {
 	grid := *navigator.grid
-	if navigator.halter.CheckInitialSquare() && navigator.halter.Halt(&grid, startRow, startCol) {
+	if halter.CheckInitialSquare() && halter.Halt(&grid, startRow, startCol) {
 		return startRow, startCol, false
 	}
 	currentRow, currentCol := startRow, startCol
@@ -203,7 +210,7 @@ func (navigator Navigator) iterateClues(startRow int, startCol int) (row int, co
 			currentRow, currentCol, didWrapGrid = navigator.getNextClueLocation(currentRow, currentCol)
 			didWrap = didWrap || didWrapGrid
 		} 
-		if navigator.halter.Halt(&grid, currentRow, currentCol) {
+		if halter.Halt(&grid, currentRow, currentCol) {
 			return currentRow, currentCol, didWrap
 		}
 	}
