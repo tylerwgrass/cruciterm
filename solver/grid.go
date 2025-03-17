@@ -89,8 +89,6 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = strings.ToUpper(string(msg.Runes[0]))
 				m.cursorY, m.cursorX, didWrap = m.navigator.
 					withOrientation(m.navOrientation).
-					withDirection(Forward).
-					withIterMode(Clues).
 					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
 				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
@@ -106,8 +104,6 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				newCursorY, newCursorX, didWrap = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Reverse).
-					withHalter(makeHalter(ValidSquare, false)).
-					withIterMode(Clues).
 					advanceCursor(m.cursorX, m.cursorY)
 			case " ":
 				m.changeNavOrientation()
@@ -119,34 +115,25 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "tab":
 				newCursorY, newCursorX, didWrap = m.navigator.
 					withOrientation(m.navOrientation).
-					withDirection(Forward).
 					advanceClue(m.cursorX, m.cursorY)
 			case "up":
 				newCursorY, newCursorX, didWrap = m.navigator.
 					withOrientation(Vertical).	
 					withDirection(Reverse).
-					withHalter(defaultHalter).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "down":
 				newCursorY, newCursorX, didWrap = m.navigator.
 					withOrientation(Vertical).	
-					withDirection(Forward).
-					withHalter(defaultHalter).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "left":
 				newCursorY, newCursorX, didWrap = m.navigator.
-					withOrientation(Horizontal).	
 					withDirection(Reverse).
-					withHalter(defaultHalter).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "right":
 				newCursorY, newCursorX, didWrap = m.navigator.
-					withOrientation(Horizontal).	
-					withDirection(Forward).
-					withHalter(defaultHalter).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			}
@@ -155,6 +142,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.changeNavOrientation()	
 			} 
     }
+		m.navigator.resetNavigatorOptions()
 		m.validateSolution()
 		currentAcrossClue = (*m.navigator.grid)[m.cursorY][m.cursorX].acrossClue
 		currentDownClue = (*m.navigator.grid)[m.cursorY][m.cursorX].downClue

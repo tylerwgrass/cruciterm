@@ -38,6 +38,7 @@ type NavigationDeltas struct {
 	dc int
 }
 
+var defaultHalter = makeHalter(ValidSquare, false) 
 func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigator {
 	navGrid := make(NavigationGrid, len(puzzleGrid))
 	acrosses := puzzle.AcrossClues
@@ -86,8 +87,17 @@ func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigato
 		grid: &navGrid,
 		orientation: Horizontal,
 		direction: Forward,
+		iterMode: Clues,
+		halters: []IHalter{defaultHalter},
 	}
 }
+func (n *Navigator) resetNavigatorOptions() {
+	n.orientation = Horizontal
+	n.direction = Forward
+	n.iterMode = Clues
+	n.halters = []IHalter{defaultHalter}
+}
+
 func (n *Navigator) withOrientation(o Orientation) *Navigator {
 	n.orientation = o
 	return n
