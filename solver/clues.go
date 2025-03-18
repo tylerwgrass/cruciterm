@@ -52,7 +52,15 @@ func (m cluesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m cluesModel) View() string {
-	return lipgloss.JoinHorizontal(lipgloss.Top, m.acrossClues.String(), m.downClues.String())
+	acrossClueContainer := lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			Width(40).
+			Render(m.acrossClues.String())
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		acrossClueContainer,
+		m.downClues.String(),
+	)
 }
 
 func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
