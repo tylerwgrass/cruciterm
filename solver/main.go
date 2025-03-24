@@ -71,15 +71,6 @@ func (m mainModel) View() string {
 }
 
 func Run(puz *puzzle.PuzzleDefinition) {
-	f, err := tea.LogToFile("debug.log", "debug")
-	if err != nil {
-		fmt.Println("fatal:", err)
-		os.Exit(1)
-	}
-	os.Truncate("debug.log", 0)
-	logger.SetLogFile(f)
-	defer f.Close()
-
 	p := tea.NewProgram(initMainModel(puz), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
