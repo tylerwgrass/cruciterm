@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tylerwgrass/cruciterm/logger"
+	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
 
@@ -284,11 +285,17 @@ func (navigator Navigator) moveToNextClue(state *NavigationState, moveToClueStar
 		if navigator.direction == Forward {
 			nextClue = currentClueCell.nextAcross 
 			if nextClue.Num < currentClue.Num {
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.nextDown
+				}
 				state.didWrap = true
 			}
 		} else {
 			nextClue = currentClueCell.prevAcross
 			if nextClue.Num > currentClue.Num {
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.prevDown
+				}
 				state.didWrap = true
 			}
 		}
@@ -297,11 +304,17 @@ func (navigator Navigator) moveToNextClue(state *NavigationState, moveToClueStar
 		if navigator.direction == Forward {
 			nextClue = currentClueCell.nextDown
 			if currentClue.Num > nextClue.Num {
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.nextAcross
+				}
 				state.didWrap = true
 			}
 		} else {
 			nextClue = currentClueCell.prevDown
 			if currentClue.Num < nextClue.Num {
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.prevAcross
+				}
 				state.didWrap = true
 			}
 		}
