@@ -1,13 +1,7 @@
 package solver
 
-import (
-	"fmt"
-
-	"github.com/tylerwgrass/cruciterm/logger"
-)
-
 type IHalter interface {
-	Halt(*NavigationGrid, int, int) bool
+	Halt(*Navigator, *NavigationState) bool
 	CheckInitialSquare() bool
 }
 
@@ -19,6 +13,7 @@ type halterType int
 const (
 	ValidSquare halterType = iota
 	EmptySquare
+	ClueChange
 )
 
 func makeHalter(hType halterType, checkInitialSquare bool) IHalter {
@@ -27,14 +22,15 @@ func makeHalter(hType halterType, checkInitialSquare bool) IHalter {
 		return ValidSquareHalter{checkInitialSquare} 
 	case EmptySquare:
 		return EmptySquareHalter{checkInitialSquare}
+	case ClueChange:
+		return ClueChangeHalter{checkInitialSquare}
 	}
 	return nil
 }
 
 type ValidSquareHalter Halter
-func (h ValidSquareHalter) Halt(g *NavigationGrid, i, j int) bool {
-	logger.Debug(fmt.Sprintf("Checking valid square at [%d,%d]: %s", i, j, (*g)[i][j].content))
-	return (*g)[i][j].content != "." 
+func (h ValidSquareHalter) Halt(n *Navigator, state *NavigationState) bool {
+	return (*n.grid)[state.row][state.col].content != "." 
 }
 
 func (h ValidSquareHalter) CheckInitialSquare() bool {
@@ -42,10 +38,19 @@ func (h ValidSquareHalter) CheckInitialSquare() bool {
 }
 
 type EmptySquareHalter Halter
-func (h EmptySquareHalter) Halt(g *NavigationGrid, i, j int) bool {
-	return (*g)[i][j].content == "-"
+func (h EmptySquareHalter) Halt(n *Navigator, state *NavigationState) bool {
+	return (*n.grid)[state.row][state.col].content == "-"
 }
 
 func (h EmptySquareHalter) CheckInitialSquare() bool {
+	return h.checkInitialSquare
+}
+
+type ClueChangeHalter Halter
+func (h ClueChangeHalter) Halt(n *Navigator, state *NavigationState) bool {
+	return state.didChangeClue
+}
+
+func (h ClueChangeHalter) CheckInitialSquare() bool {
 	return h.checkInitialSquare
 }

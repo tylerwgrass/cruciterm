@@ -1,6 +1,9 @@
 package puzzle
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type PuzzleDefinition struct {
 	Title string
@@ -10,18 +13,21 @@ type PuzzleDefinition struct {
 	Notes string
 	NumRows int
 	NumCols int
-	Clues map[int]Clue
 	NumClues int
+	AcrossClues []*Clue
+	DownClues []*Clue
 	Answer string
 	CurrentState string
 }
 
 type Clue struct {
 	Num int
-	StartY int
-	StartX int
-	AcrossClue string
-	DownClue string
+	StartRow int
+	StartCol int
+	EndRow int
+	EndCol int
+	Clue string
+	Answer string
 }
 
 var Clues map[int]Clue
@@ -42,49 +48,89 @@ func (puz * PuzzleDefinition) AssignClues(clues []string) {
 
 		isAcrossClueStart := col == 0 || string(puz.Answer[(puz.NumCols * (row)) + col - 1]) == "." 
 		isDownClueStart := row == 0 || string(puz.Answer[(puz.NumCols * (row - 1)) + col]) == "." 
+
 		if (!(isAcrossClueStart || isDownClueStart)) { 
 			continue
 		}
 		
-		clue := Clue{
-			Num: clueNum,
-			StartY: row,
-			StartX: col,
-		}
-
 		if isAcrossClueStart {
-			AcrossClues = append(AcrossClues, &clue)
-			clue.AcrossClue = clues[clueIndex]
+			clue := puz.parseClue(clueNum, row, col, true)
+			clue.Clue = clues[clueIndex]
+			AcrossClues = append(AcrossClues, clue)
 			clueIndex++
 		}
 
 		if isDownClueStart {
-			DownClues = append(DownClues, &clue)
-			clue.DownClue = clues[clueIndex]
+			clue := puz.parseClue(clueNum, row, col, false)
+			clue.Clue = clues[clueIndex]
+			DownClues = append(DownClues, clue)
 			clueIndex++
 		}
-		Clues[clueNum] = clue
-
 		clueNum++
 	}
-	puz.Clues = Clues
+	puz.AcrossClues = AcrossClues 
+	puz.DownClues = DownClues
 }
 
-func (p PuzzleDefinition) ToString() string {
-	output := "Clues:\n"
-	for i := range(p.NumClues) {
-		output += fmt.Sprintf("%s\n", p.Clues[i].ToString())
+func (p PuzzleDefinition) parseClue(clueNumber, startRow, startCol int, isAcrossClue bool) *Clue {
+	clue := Clue{
+		Num: clueNumber,
+		StartRow: startRow,
+		StartCol: startCol,
+	}
+	row, col := startRow, startCol
+	var sb strings.Builder
+	var dr, dc int
+	if isAcrossClue {
+		dr, dc = 0, 1
+	} else {
+		dr, dc = 1, 0
+	}
+	for ok := true; ok; ok = p.isVisitable(row, col) {
+		cellLocation := (row * p.NumCols) + col
+		sb.WriteString(string(p.Answer[cellLocation]))
+		row, col = row + dr, col + dc
 	}
 
+	if isAcrossClue {
+		clue.EndRow = startRow
+		clue.EndCol = col - 1
+	} else {
+		clue.EndRow = row - 1
+		clue.EndCol = startCol
+	}	
+	clue.Answer = sb.String()
+	return &clue
+}
+
+func (p PuzzleDefinition) isVisitable(row, col int) bool {
+	return row < p.NumRows &&
+		col < p.NumCols && 
+		row > -1 &&
+		col > -1 &&
+		string(p.Answer[(row * p.NumCols) + col]) != "."
+}
+
+func (p PuzzleDefinition) String() string {
+	output := "~~~Across Clues~~~\n"
+	for _, clue := range(p.AcrossClues) {
+		output += fmt.Sprintf("%v\n", clue)
+	}
+	output += "~~~Down Clues~~~\n"
+	for _, clue := range(p.DownClues) {
+		output += fmt.Sprintf("%v\n", clue)
+	}
 	return output
 }
 
-func (c Clue) ToString() string {
-	return fmt.Sprintf("Clue{num: %d, r: %d, c:%d, acrossClue: %s, downClue: %s}", 
+func (c Clue) String() string {
+	return fmt.Sprintf("Clue{num: %d, r: %d, c:%d, endr: %d, endc: %d, Clue: %s, Answer: %s}", 
 		c.Num,
-		c.StartY,
-		c.StartX,
-		c.AcrossClue,
-		c.DownClue,	
+		c.StartRow,
+		c.StartCol,
+		c.EndRow,
+		c.EndCol,
+		c.Clue,
+		c.Answer,	
 	)
 }

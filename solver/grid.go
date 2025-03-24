@@ -1,11 +1,13 @@
 package solver
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tylerwgrass/cruciterm/logger"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
@@ -76,7 +78,9 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			newCursorX, newCursorY := m.cursorX, m.cursorY
+			navStates := make([]NavigationState, 0) 
+			navStates = append(navStates, NavigationState{row: m.cursorY, col: m.cursorX, startRow: m.cursorY, startCol: m.cursorX}) 
+			var didWrap bool
 			halters := make([]IHalter, 0, 1)
 			defaultHalter := makeHalter(ValidSquare, false)
 			halters = append(halters, defaultHalter)
@@ -84,13 +88,14 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				halters = append(halters, makeHalter(EmptySquare, true))
 			}
 
-			var didWrap bool
 			if ok, _ := regexp.MatchString(`^[a-zA-Z0-9]$`, msg.String()); ok {
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = strings.ToUpper(string(msg.Runes[0]))
-				m.cursorY, m.cursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
+				endNavState := navStates[len(navStates) - 1]
+				m.cursorX, m.cursorY, didWrap = endNavState.col, endNavState.row, endNavState.didWrap
 				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					m.changeNavOrientation()	
 				} 
@@ -101,43 +106,47 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// TODO: moves to start of prev clue instead of end
 			case "backspace":
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = "-"
-				newCursorY, newCursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Reverse).
 					advanceCursor(m.cursorX, m.cursorY)
 			case " ":
 				m.changeNavOrientation()
 			case "shift+tab":
-				newCursorY, newCursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Reverse).
-					advanceClue(m.cursorX, m.cursorY)
+					withHalter(makeHalter(ClueChange, false)).
+					advanceCursor(m.cursorX, m.cursorY)
 			case "tab":
-				newCursorY, newCursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withOrientation(m.navOrientation).
-					advanceClue(m.cursorX, m.cursorY)
+					withHalter(makeHalter(ClueChange, false)).
+					advanceCursor(m.cursorX, m.cursorY)
 			case "up":
-				newCursorY, newCursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withOrientation(Vertical).	
 					withDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "down":
-				newCursorY, newCursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withOrientation(Vertical).	
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "left":
-				newCursorY, newCursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "right":
-				newCursorY, newCursorX, didWrap = m.navigator.
+				navStates = m.navigator.
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			}
-			m.cursorX, m.cursorY = newCursorX, newCursorY
+			endNavState := navStates[len(navStates) - 1]
+			m.cursorX, m.cursorY, didWrap = endNavState.col, endNavState.row, endNavState.didWrap
+			logger.Debug(fmt.Sprintf("%v", endNavState))
 			if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 				m.changeNavOrientation()	
 			} 
@@ -161,12 +170,8 @@ func (m gridModel) View() string {
 	for i, row := range *m.navigator.grid {
 		sb.WriteString(" ")
 		for j, cell := range row {
-			if i == m.cursorY && j == m.cursorX {
-				if m.solved {
-					sb.WriteString(cell.content + " ")
-				} else {
-					sb.WriteString(string(cursor) + " ")
-				}
+			if i == m.cursorY && j == m.cursorX && !m.solved {
+				sb.WriteString(string(cursor) + " ")
 				continue
 			}
 			switch cell.content {
