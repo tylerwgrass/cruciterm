@@ -169,6 +169,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m gridModel) View() string {
+	activeClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 	var sb strings.Builder
 	var cursor string
 	if (m.navOrientation == Horizontal) {
@@ -176,21 +177,29 @@ func (m gridModel) View() string {
 	} else {
 		cursor = "v" 
 	}
-	cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Render(cursor)
+	cursor = activeClueStyle.Render(cursor) 
 	for i, row := range *m.navigator.grid {
 		sb.WriteString(" ")
 		for j, cell := range row {
 			if i == m.cursorY && j == m.cursorX && !m.solved {
-				sb.WriteString(string(cursor) + " ")
+				sb.WriteString(cursor + " ")
 				continue
 			}
 			switch cell.content {
 			case ".":
 				sb.WriteString("■ ")
 			case "-":
-				sb.WriteString("  ")
+				if m.isCellInActiveClue(i, j) {
+					sb.WriteString(activeClueStyle.Render("_ "))
+				} else {
+					sb.WriteString("  ")
+				}
 			default:
-				sb.WriteString(cell.content + " ")
+				if m.isCellInActiveClue(i, j) { 
+					sb.WriteString(activeClueStyle.Render(cell.content + " "))
+				} else {
+					sb.WriteString(cell.content + " ")
+				}
 			} 
 		}
 		if i < len(*m.navigator.grid) - 1 {
@@ -199,6 +208,17 @@ func (m gridModel) View() string {
 	}
 
 	return baseStyle.Render(sb.String())
+}
+
+func (m gridModel) isCellInActiveClue(row, col int) bool {
+	return (m.navOrientation == Horizontal && 
+		col >= currentAcrossClue.StartCol && 
+		col <= currentAcrossClue.EndCol && 
+		row == m.cursorY) ||
+		(m.navOrientation == Vertical &&
+			row >= currentDownClue.StartRow &&
+			row <= currentDownClue.EndRow &&
+			col == m.cursorX)	
 }
 
 func (m *gridModel) changeNavOrientation() {
