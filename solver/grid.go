@@ -132,22 +132,38 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "up":
+				if prefs.GetBool(prefs.SwapCursorOnDirectionChange) && m.navOrientation != Vertical {
+					m.changeNavOrientation()
+					break
+				}
 				navStates = m.navigator.
 					withOrientation(Vertical).	
 					withDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "down":
+				if prefs.GetBool(prefs.SwapCursorOnDirectionChange)  && m.navOrientation != Vertical {
+					m.changeNavOrientation()
+					break
+				}
 				navStates = m.navigator.
 					withOrientation(Vertical).	
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "left":
+				if prefs.GetBool(prefs.SwapCursorOnDirectionChange) && m.navOrientation != Horizontal {
+					m.changeNavOrientation()
+					break
+				}
 				navStates = m.navigator.
 					withDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "right":
+				if prefs.GetBool(prefs.SwapCursorOnDirectionChange) && m.navOrientation != Horizontal {
+					m.changeNavOrientation()
+					break
+				}
 				navStates = m.navigator.
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
