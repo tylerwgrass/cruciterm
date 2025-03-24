@@ -144,15 +144,15 @@ func (n *Navigator) withIterMode(i IterationMode) *Navigator {
 
 func (navigator Navigator) advanceCursor(startCol, startRow int) []NavigationState {
 	navStates := make([]NavigationState, 0, len(navigator.halters))
-	row, col := startRow, startCol
 	for _, halter := range(navigator.halters) {
-		navState := NavigationState{row: row, col: col, startRow: row, startCol: col}
+		navState := NavigationState{row: startRow, col: startCol, startRow: startRow, startCol: startCol}
 		if navigator.iterMode == Cardinal {
 			navigator.iterateCardinal(&navState, halter)
 		} else {
 			navigator.iterateClues(&navState, halter)
 		}
 		navStates = append(navStates, navState)
+		startRow, startCol = navState.row, navState.col
 	}
 	return navStates
 }
@@ -356,6 +356,18 @@ func (n Navigator) getDeltas() NavigationDeltas {
 func (n Navigator) String() string {
 	return fmt.Sprintf("{o: %v, d: %v, iterMode: %v, halters: %v}", n.orientation, n.direction, n.iterMode, n.halters)
 }
+
+func (ns NavigationState) String() string {
+	return fmt.Sprintf("NavigationState{Start: [%d, %d] End: [%d, %d], didWrap=%t, didChangeClue=%t}", 
+		ns.startCol, 
+		ns.startRow,
+		ns.col,
+		ns.row,
+		ns.didWrap,
+		ns.didChangeClue,
+	)
+}
+
 
 func (c Cell) String() string {
 	var sb strings.Builder

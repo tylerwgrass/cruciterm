@@ -1,13 +1,12 @@
 package solver
 
 import (
-	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/tylerwgrass/cruciterm/logger"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
@@ -112,15 +111,25 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case " ":
 				m.changeNavOrientation()
 			case "shift+tab":
+				halters = make([]IHalter, 0, 2)
+				halters = append(halters, makeHalter(ClueChange, false))
+				if prefs.GetBool(prefs.JumpToEmptySquare) {
+					halters = append(halters, makeHalter(EmptySquare, true))
+				}
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Reverse).
-					withHalter(makeHalter(ClueChange, false)).
+					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "tab":
+				halters = make([]IHalter, 0, 2)
+				halters = append(halters, makeHalter(ClueChange, false))
+				if prefs.GetBool(prefs.JumpToEmptySquare) {
+					halters = append(halters, makeHalter(EmptySquare, true))
+				}
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
-					withHalter(makeHalter(ClueChange, false)).
+					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
 			case "up":
 				navStates = m.navigator.
@@ -144,8 +153,10 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					advanceCursor(m.cursorX, m.cursorY)
 			}
 			endNavState := navStates[len(navStates) - 1]
-			m.cursorX, m.cursorY, didWrap = endNavState.col, endNavState.row, endNavState.didWrap
-			logger.Debug(fmt.Sprintf("%v", endNavState))
+			m.cursorX, m.cursorY = endNavState.col, endNavState.row
+			didWrap = slices.ContainsFunc(navStates, func(ns NavigationState) bool {
+				return ns.didWrap
+			})
 			if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 				m.changeNavOrientation()	
 			} 
