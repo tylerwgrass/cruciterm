@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/bubbles/stopwatch"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tylerwgrass/cruciterm/logger"
@@ -17,13 +18,15 @@ type mainModel struct {
 	copyright string
 	clues tea.Model
 	grid tea.Model
+	stopwatch stopwatch.Model
 }
 
 func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	grid := initGridModel(puz)
 	clues := initCluesModel(puz)
-
+	stopwatch := stopwatch.New()
 	return mainModel{
+		stopwatch: stopwatch,
 		title: puz.Title,
 		author: puz.Author,
 		copyright: puz.Copyright,
@@ -33,7 +36,7 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 }
 
 func (m mainModel) Init() tea.Cmd {
-	return nil
+	return m.stopwatch.Init()
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,13 +49,15 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	m.grid, _ = m.grid.Update(msg)
 	m.clues, _ = m.clues.Update(msg)
-	return m, nil
+	var cmd tea.Cmd
+	m.stopwatch, cmd = m.stopwatch.Update(msg)
+	return m, cmd
 }
 
 func (m mainModel) View() string {
 	width, height, err := term.GetSize(0)
 	if err != nil {
-		logger.Debug(fmt.Sprintf("Failed to get terminal size"))
+		logger.Debug("Failed to get terminal size")
 		width = 500
 		height = 500
 	}
@@ -64,7 +69,12 @@ func (m mainModel) View() string {
 	mainContent := lipgloss.JoinVertical(
 		lipgloss.Center,
 		header,
-		lipgloss.NewStyle().AlignVertical(lipgloss.Center).Render(lipgloss.JoinHorizontal(lipgloss.Top, m.grid.View(), m.clues.View())),
+		lipgloss.NewStyle().AlignVertical(lipgloss.Center).Render(
+			lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				lipgloss.JoinVertical(lipgloss.Left, m.grid.View(), m.stopwatch.View()),
+				m.clues.View(),
+			)),
 		footer,
 	)
 	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, mainContent)
