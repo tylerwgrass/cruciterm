@@ -149,9 +149,7 @@ func (navigator Navigator) advanceCursor(startCol, startRow int) []NavigationSta
 		if navigator.iterMode == Cardinal {
 			navigator.iterateCardinal(&navState, halter)
 		} else {
-			_, ok := halter.(ClueChangeHalter) 
-			moveToStartOfClue := !ok || navigator.direction == Forward
-			navigator.iterateClues(&navState, halter, moveToStartOfClue)
+			navigator.iterateClues(&navState, halter)
 		}
 		navStates = append(navStates, navState)
 	}
@@ -181,7 +179,7 @@ func (navigator Navigator) iterateCardinal(state *NavigationState, halter IHalte
 	}
 }
 
-func (navigator Navigator) iterateClues(state *NavigationState, halter IHalter, moveToClueStart bool) {
+func (navigator Navigator) iterateClues(state *NavigationState, halter IHalter) {
 	grid := *navigator.grid
 	var startClue *puzzle.Clue
 	if navigator.orientation == Horizontal {
@@ -202,7 +200,9 @@ func (navigator Navigator) iterateClues(state *NavigationState, halter IHalter, 
 			state.row = nextRow
 			state.col = nextCol
 		} else {
-			navigator.moveToNextClue(state, moveToClueStart)
+			_, ok := halter.(ClueChangeHalter) 
+			moveToStartOfClue := ok || (!ok && navigator.direction == Forward)
+			navigator.moveToNextClue(state, moveToStartOfClue)
 			logger.Debug(fmt.Sprintf("Moved to cell [%d, %d]", state.col, state.row))
 			if (navigator.orientation == Horizontal && startClue != (*navigator.grid)[state.row][state.col].acrossClue) ||
 				(navigator.orientation == Vertical && startClue != (*navigator.grid)[state.row][state.col].downClue) {

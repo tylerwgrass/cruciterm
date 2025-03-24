@@ -103,7 +103,6 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			switch msg.String() {
-			// TODO: moves to start of prev clue instead of end
 			case "backspace":
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = "-"
 				navStates = m.navigator.
