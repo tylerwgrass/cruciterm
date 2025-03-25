@@ -44,6 +44,17 @@ var keys = keyMap{
 	),
 	ToggleDirection: key.NewBinding(
 		key.WithKeys(" "),
-		key.WithHelp(" ", "change direction"),
+		key.WithHelp("space", "change direction"),
 	),
+}
+
+func (k keyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.NextClue, k.PrevClue, k.ToggleDirection, k.Quit}
+}
+
+func (k keyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.NextClue, k.PrevClue}, 
+		{k.ToggleDirection, k.Quit},
+	}
 }

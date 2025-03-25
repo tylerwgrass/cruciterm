@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/stopwatch"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -19,6 +20,7 @@ type mainModel struct {
 	clues tea.Model
 	grid tea.Model
 	stopwatch stopwatch.Model
+	help help.Model
 }
 
 var solvingOrientation Orientation = Horizontal
@@ -27,6 +29,8 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	grid := initGridModel(puz)
 	clues := initCluesModel(puz)
 	stopwatch := stopwatch.New()
+	help := help.New()
+	help.ShowAll = true
 	return mainModel{
 		stopwatch: stopwatch,
 		title: puz.Title,
@@ -34,6 +38,7 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 		copyright: puz.Copyright,
 		grid: grid,
 		clues: clues,
+		help: help,
 	}
 }
 
@@ -72,7 +77,7 @@ func (m mainModel) View() string {
 	if m.grid.(gridModel).solved {
 		header += "Solved!\n"
 	}
-	footer := ("\nPress ctrl+c to quit.\n")
+	footer := m.help.View(keys) 
 	mainContent := lipgloss.JoinVertical(
 		lipgloss.Center,
 		header,
