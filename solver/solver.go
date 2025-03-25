@@ -21,6 +21,8 @@ type mainModel struct {
 	stopwatch stopwatch.Model
 }
 
+var solvingOrientation Orientation = Horizontal
+
 func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	grid := initGridModel(puz)
 	clues := initCluesModel(puz)
@@ -49,6 +51,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	m.grid, _ = m.grid.Update(msg)
 	m.clues, _ = m.clues.Update(msg)
+	solvingOrientation = m.grid.(gridModel).navOrientation
 	var cmd tea.Cmd
 	if m.grid.(gridModel).solved {
 		cmd = m.stopwatch.Stop()

@@ -19,6 +19,7 @@ var currentDownClue *puzzle.Clue
 type cluesModel struct {
 	acrossClues *list.List
 	downClues *list.List
+	activeClueOrientation Orientation
 }
 
 func clueEnumerator(items list.Items, i int) string {
@@ -30,6 +31,7 @@ func initCluesModel(puz *puzzle.PuzzleDefinition) cluesModel {
 	return cluesModel{
 		acrossClues: acrossClues,
 		downClues: downClues,
+		activeClueOrientation: Horizontal,
 	}
 }
 
@@ -53,6 +55,8 @@ func (m cluesModel) View() string {
 }
 
 func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
+	activeClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
+	crossClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EFC1F3"))
 	acrossClues := list.New()
 	downClues := list.New()
 
@@ -61,7 +65,11 @@ func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
 			Enumerator(clueEnumerator).
 			ItemStyleFunc(func(items list.Items, i int) lipgloss.Style {
 				if currentAcrossClue.Num == puz.AcrossClues[i].Num {
-					return lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
+					if solvingOrientation == Horizontal {
+						return activeClueStyle
+					} else {
+						return crossClueStyle
+					}
 				}
 					return lipgloss.NewStyle()
 			})
@@ -70,9 +78,13 @@ func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
 		downClues.Item(fmt.Sprintf("%d. %s", clue.Num, clue.Clue)).
 			Enumerator(clueEnumerator).
 			ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
-					if currentDownClue.Num == puz.DownClues[i].Num {
-						return lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
+				if currentDownClue.Num == puz.DownClues[i].Num {
+					if solvingOrientation == Vertical {
+						return activeClueStyle
+					} else {
+						return crossClueStyle
 					}
+				}
 					return lipgloss.NewStyle()
 			})
 	}
