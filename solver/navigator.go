@@ -219,10 +219,17 @@ func (navigator *Navigator) iterateClues(state *NavigationState, halter IHalter)
 } 
 
 func (navigator Navigator) moveToNextValidCardinal(state *NavigationState) {
+	startRow, startCol := state.row, state.col
 	deltas := navigator.getDeltas()
 	grid := *navigator.grid
 	for ok := true; ok; ok = !grid.isVisitable(state.row, state.col) {
 		nextRow, nextCol := state.row + deltas.dr, state.col + deltas.dc
+		if !prefs.GetBool(prefs.WrapOnArrowNavigation) {
+			if nextRow < 0 || nextRow > len(grid) - 1 || nextCol < 0 || nextCol > len(grid[0]) - 1 {
+				state.row, state.col = startRow, startCol
+				return
+			}
+		}
 		if nextRow < 0 {
 			nextRow = len(grid) - 1
 		} else if nextRow == len(grid) {

@@ -9,12 +9,14 @@ const (
 	SwapCursorOnDirectionChange Preference = iota
 	SwapCursorOnGridWrap
 	WrapAtEndOfGrid
+	WrapOnArrowNavigation
 	JumpToEmptySquare
 )
 
 var defaultPreferences = map[Preference]interface{}{
 	SwapCursorOnDirectionChange: true,
 	SwapCursorOnGridWrap: true,
+	WrapOnArrowNavigation: false,
 	WrapAtEndOfGrid: true,
 	JumpToEmptySquare: true,
 }
