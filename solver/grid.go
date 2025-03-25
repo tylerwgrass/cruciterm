@@ -94,7 +94,10 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
 				endNavState := navStates[len(navStates) - 1]
-				m.cursorX, m.cursorY, didWrap = endNavState.col, endNavState.row, endNavState.didWrap
+				m.cursorX, m.cursorY = endNavState.col, endNavState.row
+				didWrap = slices.ContainsFunc(navStates, func(ns NavigationState) bool {
+					return ns.didWrap
+				})
 				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					m.changeNavOrientation()	
 				} 
