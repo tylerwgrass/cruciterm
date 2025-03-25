@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tylerwgrass/cruciterm/logger"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
@@ -205,6 +206,7 @@ func (navigator *Navigator) iterateClues(state *NavigationState, halter IHalter)
 		} else {
 			_, ok := halter.(ClueChangeHalter) 
 			moveToStartOfClue := ok || (!ok && navigator.direction == Forward)
+			logger.Debug(fmt.Sprintf("%t", moveToStartOfClue))
 			navigator.moveToNextClue(state, moveToStartOfClue)
 			if (navigator.orientation == Horizontal && startClue != (*navigator.grid)[state.row][state.col].acrossClue) ||
 				(navigator.orientation == Vertical && startClue != (*navigator.grid)[state.row][state.col].downClue) {
@@ -295,6 +297,7 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState, moveToClueSta
 			if nextClue.Num < currentClue.Num {
 				state.didWrap = true
 				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.nextDown
 					navigator.orientation = Vertical
 				}
 			}
@@ -303,6 +306,7 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState, moveToClueSta
 			if nextClue.Num > currentClue.Num {
 				state.didWrap = true
 				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.prevDown
 					navigator.orientation = Vertical
 				}
 			}
@@ -314,6 +318,7 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState, moveToClueSta
 			if currentClue.Num > nextClue.Num {
 				state.didWrap = true
 				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.nextAcross
 					navigator.orientation = Horizontal
 				}
 			}
@@ -322,11 +327,14 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState, moveToClueSta
 			if currentClue.Num < nextClue.Num {
 				state.didWrap = true
 				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					nextClue = currentClueCell.prevAcross
 					navigator.orientation = Horizontal
 				}
 			}
 		}
 	}
+	logger.Debug(fmt.Sprintf("Next Clue: %v", nextClue))
+	logger.Debug(fmt.Sprintf("move to start? %t", moveToClueStart))
 	if moveToClueStart {
 		state.row, state.col = nextClue.StartRow, nextClue.StartCol
 	} else {
