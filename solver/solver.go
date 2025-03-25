@@ -50,7 +50,11 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.grid, _ = m.grid.Update(msg)
 	m.clues, _ = m.clues.Update(msg)
 	var cmd tea.Cmd
-	m.stopwatch, cmd = m.stopwatch.Update(msg)
+	if m.grid.(gridModel).solved {
+		cmd = m.stopwatch.Stop()
+	} else {
+		m.stopwatch, cmd = m.stopwatch.Update(msg)
+	}
 	return m, cmd
 }
 
