@@ -113,9 +113,6 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "shift+tab":
 				halters = make([]IHalter, 0, 2)
 				halters = append(halters, makeHalter(ClueChange, false))
-				if prefs.GetBool(prefs.JumpToEmptySquare) {
-					halters = append(halters, makeHalter(EmptySquare, true))
-				}
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Reverse).
@@ -124,9 +121,6 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "tab":
 				halters = make([]IHalter, 0, 2)
 				halters = append(halters, makeHalter(ClueChange, false))
-				if prefs.GetBool(prefs.JumpToEmptySquare) {
-					halters = append(halters, makeHalter(EmptySquare, true))
-				}
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withHalters(halters).
