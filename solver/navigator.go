@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tylerwgrass/cruciterm/logger"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 )
@@ -91,12 +90,12 @@ func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigato
 				cell.prevDown = prevDown
 				cell.nextDown = nextDown
 				cell.acrossClue = acrosses[currentAcrossIndex]
-				if row > 0 && navGrid[row - 1][col].content != "." {
+				if row == 0 || navGrid[row - 1][col].content == "." {
+					cell.downClue = downs[currentDownIndex]
+				} else {
 					cell.downClue = navGrid[row - 1][col].downClue
 					cell.nextDown = navGrid[row - 1][col].nextDown
 					cell.prevDown = navGrid[row - 1][col].prevDown
-				} else {
-					cell.downClue = downs[currentDownIndex]
 				}
 			}
 			navGrid[row][col] = cell
@@ -142,7 +141,7 @@ func (n *Navigator) withIterMode(i IterationMode) *Navigator {
 	return n
 }
 
-func (navigator Navigator) advanceCursor(startCol, startRow int) []NavigationState {
+func (navigator *Navigator) advanceCursor(startCol, startRow int) []NavigationState {
 	navStates := make([]NavigationState, 0, len(navigator.halters))
 	for _, halter := range(navigator.halters) {
 		navState := NavigationState{row: startRow, col: startCol, startRow: startRow, startCol: startCol}
@@ -180,7 +179,9 @@ func (navigator Navigator) iterateCardinal(state *NavigationState, halter IHalte
 	}
 }
 
-func (navigator Navigator) iterateClues(state *NavigationState, halter IHalter) {
+// TODO when tab navving in reverse with empty squares, should move backwards in clue numbers, 
+// but forward through the clue cells to check if they are empty first. Instead of backwards ONLY
+func (navigator *Navigator) iterateClues(state *NavigationState, halter IHalter) {
 	grid := *navigator.grid
 	var startClue *puzzle.Clue
 	if navigator.orientation == Horizontal {
@@ -188,14 +189,15 @@ func (navigator Navigator) iterateClues(state *NavigationState, halter IHalter) 
 	} else {
 		startClue = (*navigator.grid)[state.startRow][state.startCol].downClue
 	}
-	if halter.CheckInitialSquare() && halter.Halt(&navigator, state) {
+	if halter.CheckInitialSquare() && halter.Halt(navigator, state) {
 		return
 	}
-	deltas := navigator.getDeltas()
+	var deltas NavigationDeltas
 	for {
 		if state.didWrap && state.row == state.startRow && state.col == state.startCol {
 			break
 		} 
+		deltas = navigator.getDeltas()
 		nextRow, nextCol := state.row + deltas.dr, state.col + deltas.dc
 		if grid.isVisitable(nextRow, nextCol) {
 			state.row = nextRow
@@ -204,13 +206,13 @@ func (navigator Navigator) iterateClues(state *NavigationState, halter IHalter) 
 			_, ok := halter.(ClueChangeHalter) 
 			moveToStartOfClue := ok || (!ok && navigator.direction == Forward)
 			navigator.moveToNextClue(state, moveToStartOfClue)
-			logger.Debug(fmt.Sprintf("Moved to cell [%d, %d]", state.col, state.row))
 			if (navigator.orientation == Horizontal && startClue != (*navigator.grid)[state.row][state.col].acrossClue) ||
 				(navigator.orientation == Vertical && startClue != (*navigator.grid)[state.row][state.col].downClue) {
 				state.didChangeClue = true
 			}
 		} 
-		if halter.Halt(&navigator, state) {
+
+		if halter.Halt(navigator, state) {
 			return
 		}
 	}
@@ -273,8 +275,7 @@ func (navigator Navigator) moveToNextValidCardinal(state *NavigationState) {
 	}
 	state.didChangeClue = true
 }
-
-func (navigator Navigator) moveToNextClue(state *NavigationState, moveToClueStart bool) {
+func (navigator *Navigator) moveToNextClue(state *NavigationState, moveToClueStart bool) {
 	startRow, startCol := state.row, state.col
 	grid := *navigator.grid
 	currentClueCell := grid[startRow][startCol]
@@ -285,18 +286,18 @@ func (navigator Navigator) moveToNextClue(state *NavigationState, moveToClueStar
 		if navigator.direction == Forward {
 			nextClue = currentClueCell.nextAcross 
 			if nextClue.Num < currentClue.Num {
-				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-					nextClue = currentClueCell.nextDown
-				}
 				state.didWrap = true
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					navigator.orientation = Vertical
+				}
 			}
 		} else {
 			nextClue = currentClueCell.prevAcross
 			if nextClue.Num > currentClue.Num {
-				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-					nextClue = currentClueCell.prevDown
-				}
 				state.didWrap = true
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					navigator.orientation = Vertical
+				}
 			}
 		}
 	} else {
@@ -304,18 +305,18 @@ func (navigator Navigator) moveToNextClue(state *NavigationState, moveToClueStar
 		if navigator.direction == Forward {
 			nextClue = currentClueCell.nextDown
 			if currentClue.Num > nextClue.Num {
-				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-					nextClue = currentClueCell.nextAcross
-				}
 				state.didWrap = true
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					navigator.orientation = Horizontal
+				}
 			}
 		} else {
 			nextClue = currentClueCell.prevDown
 			if currentClue.Num < nextClue.Num {
-				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-					nextClue = currentClueCell.prevAcross
-				}
 				state.didWrap = true
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					navigator.orientation = Horizontal
+				}
 			}
 		}
 	}
