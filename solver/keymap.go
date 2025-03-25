@@ -1,0 +1,49 @@
+package solver
+
+import "github.com/charmbracelet/bubbles/key"
+
+type keyMap struct {
+	Up 							key.Binding
+	Down 						key.Binding
+	Left 						key.Binding
+	Right 					key.Binding
+	Delete					key.Binding
+	Quit 						key.Binding
+	NextClue 				key.Binding
+	PrevClue 				key.Binding
+	ToggleDirection key.Binding
+}
+
+var keys = keyMap{
+	Up: key.NewBinding(
+		key.WithKeys("up"),
+	),
+	Down: key.NewBinding(
+		key.WithKeys("down"),
+	),
+	Left: key.NewBinding(
+		key.WithKeys("left"),
+	),
+	Right: key.NewBinding(
+		key.WithKeys("right"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("backspace", "delete"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("ctrl+c"),
+		key.WithHelp("ctrl+c", "quit"),
+	),
+	NextClue: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "next clue"),
+	),
+	PrevClue: key.NewBinding(
+		key.WithKeys("shift+tab"),
+		key.WithHelp("shift+tab", "previous clue"),
+	),
+	ToggleDirection: key.NewBinding(
+		key.WithKeys(" "),
+		key.WithHelp(" ", "change direction"),
+	),
+}

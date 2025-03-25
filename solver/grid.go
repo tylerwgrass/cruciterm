@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
@@ -104,16 +105,16 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 
-			switch msg.String() {
-			case "backspace":
+			switch {
+			case key.Matches(msg, keys.Delete):
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = "-"
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withDirection(Reverse).
 					advanceCursor(m.cursorX, m.cursorY)
-			case " ":
+			case key.Matches(msg, keys.ToggleDirection):
 				m.changeNavOrientation()
-			case "shift+tab":
+			case key.Matches(msg, keys.PrevClue):
 				halters = make([]IHalter, 0, 2)
 				halters = append(halters, makeHalter(ClueChange, false))
 				navStates = m.navigator.
@@ -121,14 +122,14 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withDirection(Reverse).
 					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
-			case "tab":
+			case key.Matches(msg, keys.NextClue):
 				halters = make([]IHalter, 0, 2)
 				halters = append(halters, makeHalter(ClueChange, false))
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
-			case "up":
+			case key.Matches(msg, keys.Up):
 				if prefs.GetBool(prefs.SwapCursorOnDirectionChange) && m.navOrientation != Vertical {
 					m.changeNavOrientation()
 					break
@@ -138,7 +139,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
-			case "down":
+			case key.Matches(msg, keys.Down):
 				if prefs.GetBool(prefs.SwapCursorOnDirectionChange)  && m.navOrientation != Vertical {
 					m.changeNavOrientation()
 					break
@@ -147,7 +148,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withOrientation(Vertical).	
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
-			case "left":
+			case key.Matches(msg, keys.Left):
 				if prefs.GetBool(prefs.SwapCursorOnDirectionChange) && m.navOrientation != Horizontal {
 					m.changeNavOrientation()
 					break
@@ -156,7 +157,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					withDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
-			case "right":
+			case key.Matches(msg, keys.Right):
 				if prefs.GetBool(prefs.SwapCursorOnDirectionChange) && m.navOrientation != Horizontal {
 					m.changeNavOrientation()
 					break
