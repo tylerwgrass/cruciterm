@@ -51,42 +51,60 @@ func (m cluesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m cluesModel) View() string {
-	return lipgloss.JoinHorizontal(lipgloss.Top, m.acrossClues.String(), m.downClues.String())
+	CONTAINER_WIDTH := 40
+	clueContainerStyle := lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			Width(CONTAINER_WIDTH)
+	return lipgloss.JoinHorizontal(lipgloss.Top,
+		clueContainerStyle.Render(
+			lipgloss.JoinVertical( lipgloss.Left,
+				lipgloss.PlaceHorizontal(CONTAINER_WIDTH, lipgloss.Center, "~~~ ACROSS ~~~"),
+				m.acrossClues.String(),
+			)), 
+		clueContainerStyle.Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				lipgloss.PlaceHorizontal(CONTAINER_WIDTH, lipgloss.Center, "~~~ DOWN ~~~"),
+			m.downClues.String(),
+		)),
+	)
 }
 
 func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
 	activeClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
 	crossClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EFC1F3"))
-	acrossClues := list.New()
-	downClues := list.New()
-
+	acrossClues := list.New().
+		Enumerator(clueEnumerator).
+		ItemStyleFunc(func(items list.Items, i int) lipgloss.Style {
+			if currentAcrossClue.Num == puz.AcrossClues[i].Num {
+				if solvingOrientation == Horizontal {
+					return activeClueStyle
+				} else {
+					return crossClueStyle
+				}
+			}
+				return lipgloss.NewStyle()
+		})
+	downClues := list.New().
+		Enumerator(clueEnumerator).
+		ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
+			if currentDownClue.Num == puz.DownClues[i].Num {
+				if solvingOrientation == Vertical {
+					return activeClueStyle
+				} else {
+					return crossClueStyle
+				}
+			}
+				return lipgloss.NewStyle()
+		})
+	
  	for _, clue := range puz.AcrossClues {
-		acrossClues.Item(fmt.Sprintf("%d. %s", clue.Num, clue.Clue)).
-			Enumerator(clueEnumerator).
-			ItemStyleFunc(func(items list.Items, i int) lipgloss.Style {
-				if currentAcrossClue.Num == puz.AcrossClues[i].Num {
-					if solvingOrientation == Horizontal {
-						return activeClueStyle
-					} else {
-						return crossClueStyle
-					}
-				}
-					return lipgloss.NewStyle()
-			})
+		acrossClues.Item(fmt.Sprintf("%d. %s", clue.Num, clue.Clue))
 	}
+
 	for _, clue := range puz.DownClues {
-		downClues.Item(fmt.Sprintf("%d. %s", clue.Num, clue.Clue)).
-			Enumerator(clueEnumerator).
-			ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
-				if currentDownClue.Num == puz.DownClues[i].Num {
-					if solvingOrientation == Vertical {
-						return activeClueStyle
-					} else {
-						return crossClueStyle
-					}
-				}
-					return lipgloss.NewStyle()
-			})
+		downClues.Item(fmt.Sprintf("%d. %s", clue.Num, clue.Clue))
 	}
+
 	return acrossClues, downClues
 }
