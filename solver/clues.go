@@ -47,23 +47,25 @@ func (m cluesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m cluesModel) View() string {
-	CONTAINER_WIDTH := 40
+	CONTAINER_WIDTH := 80 
+	COLUMN_WIDTH := 36
 	clueContainerStyle := lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).
-			Width(CONTAINER_WIDTH)
-	return lipgloss.JoinHorizontal(lipgloss.Top,
-		clueContainerStyle.Render(
+			Width(CONTAINER_WIDTH).
+			Padding(0, 2)
+	return clueContainerStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top,
+		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
 			lipgloss.JoinVertical( lipgloss.Left,
-				lipgloss.PlaceHorizontal(CONTAINER_WIDTH, lipgloss.Center, "~~~ ACROSS ~~~"),
+				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ ACROSS ~~~"),
 				m.acrossClues.String(),
 			)), 
-		clueContainerStyle.Render(
+		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
 			lipgloss.JoinVertical(
 				lipgloss.Left,
-				lipgloss.PlaceHorizontal(CONTAINER_WIDTH, lipgloss.Center, "~~~ DOWN ~~~"),
+				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ DOWN ~~~"),
 			m.downClues.String(),
 		)),
-	)
+	))
 }
 
 func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
