@@ -1,6 +1,6 @@
 package solver
 
-import "github.com/charmbracelet/bubbles/key"
+import "github.com/charmbracelet/bubbles/v2/key"
 
 type keyMap struct {
 	Up 							key.Binding

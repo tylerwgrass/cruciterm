@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/stopwatch"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/stopwatch"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/tylerwgrass/cruciterm/logger"
 	"github.com/tylerwgrass/cruciterm/puzzle"
 	"golang.org/x/term"
@@ -17,8 +17,8 @@ type mainModel struct {
 	title string
 	author string
 	copyright string
-	clues tea.Model
-	grid tea.Model
+	clues cluesModel
+	grid gridModel
 	stopwatch stopwatch.Model
 	help help.Model
 }
@@ -54,11 +54,11 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	}
-	m.grid, _ = m.grid.Update(msg)
-	m.clues, _ = m.clues.Update(msg)
-	solvingOrientation = m.grid.(gridModel).navOrientation
+	grid, _ := m.grid.Update(msg)
+	m.grid = grid.(gridModel)
+	solvingOrientation = m.grid.navOrientation
 	var cmd tea.Cmd
-	if m.grid.(gridModel).solved {
+	if m.grid.solved {
 		cmd = m.stopwatch.Stop()
 	} else {
 		m.stopwatch, cmd = m.stopwatch.Update(msg)
@@ -74,7 +74,7 @@ func (m mainModel) View() string {
 		height = 500
 	}
 	header := fmt.Sprintf("%s\n%s %s\n", m.title, m.author, m.copyright)
-	if m.grid.(gridModel).solved {
+	if m.grid.solved {
 		header += "Solved!\n"
 	}
 	footer := m.help.View(keys) 
