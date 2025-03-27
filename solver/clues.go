@@ -22,10 +22,6 @@ type cluesModel struct {
 	activeClueOrientation Orientation
 }
 
-func clueEnumerator(items list.Items, i int) string {
-	return ""
-}
-
 func initCluesModel(puz *puzzle.PuzzleDefinition) cluesModel {
   acrossClues, downClues := organizeClues(puz)
 	return cluesModel{
@@ -74,7 +70,9 @@ func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
 	activeClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
 	crossClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EFC1F3"))
 	acrossClues := list.New().
-		Enumerator(clueEnumerator).
+		Enumerator(func(_ list.Items, i int) string {
+			return fmt.Sprintf("%d. ",puz.AcrossClues[i].Num)
+		}).
 		ItemStyleFunc(func(items list.Items, i int) lipgloss.Style {
 			if currentAcrossClue.Num == puz.AcrossClues[i].Num {
 				if solvingOrientation == Horizontal {
@@ -86,7 +84,9 @@ func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
 				return lipgloss.NewStyle()
 		})
 	downClues := list.New().
-		Enumerator(clueEnumerator).
+		Enumerator(func(_ list.Items, i int) string {
+			return fmt.Sprintf("%d. ",puz.DownClues[i].Num)
+		}).
 		ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
 			if currentDownClue.Num == puz.DownClues[i].Num {
 				if solvingOrientation == Vertical {
@@ -99,11 +99,11 @@ func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
 		})
 	
  	for _, clue := range puz.AcrossClues {
-		acrossClues.Item(fmt.Sprintf("%d. %s", clue.Num, clue.Clue))
+		acrossClues.Item(clue.Clue)
 	}
 
 	for _, clue := range puz.DownClues {
-		downClues.Item(fmt.Sprintf("%d. %s", clue.Num, clue.Clue))
+		downClues.Item(clue.Clue)
 	}
 
 	return acrossClues, downClues
