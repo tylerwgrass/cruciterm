@@ -13,20 +13,23 @@ var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
+var NUM_SHOWN_CLUES int = 9
+var acrossClues []*puzzle.Clue
+var downClues []*puzzle.Clue
 var currentAcrossClue *puzzle.Clue
 var currentDownClue *puzzle.Clue
 
 type cluesModel struct {
-	acrossClues *list.List
-	downClues *list.List
+	acrossClues []*puzzle.Clue
+	downClues []*puzzle.Clue
 	activeClueOrientation Orientation
 }
 
 func initCluesModel(puz *puzzle.PuzzleDefinition) cluesModel {
-  acrossClues, downClues := organizeClues(puz)
+	acrossClues, downClues = puz.AcrossClues, puz.DownClues
 	return cluesModel{
-		acrossClues: acrossClues,
-		downClues: downClues,
+		acrossClues: puz.AcrossClues,
+		downClues: puz.DownClues,
 		activeClueOrientation: Horizontal,
 	}
 }
@@ -46,45 +49,51 @@ func (m cluesModel) View() string {
 			Border(lipgloss.NormalBorder()).
 			Width(CONTAINER_WIDTH).
 			Padding(0, 2)
+	renderedAcrossClues := getClueRendering(currentAcrossClue, acrossClues, Horizontal)
+	renderedDownClues := getClueRendering(currentDownClue, downClues, Vertical)
 	return clueContainerStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top,
 		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
 			lipgloss.JoinVertical( lipgloss.Left,
 				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ ACROSS ~~~"),
-				m.acrossClues.String(),
+				renderedAcrossClues,
 			)), 
 		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
 			lipgloss.JoinVertical(
 				lipgloss.Left,
 				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ DOWN ~~~"),
-			m.downClues.String(),
+				renderedDownClues,
 		)),
 	))
 }
 
-func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
+func getClueRendering(currentClue *puzzle.Clue, clues []*puzzle.Clue, orientation Orientation) string {
+	var currentClueIndex int
+	for i, clue := range(clues) {
+		if clue == currentClue {
+			currentClueIndex = i
+			break
+		}
+	}
+	rangeStart, rangeEnd := currentClueIndex, currentClueIndex
+	for rangeEnd - rangeStart + 1 < NUM_SHOWN_CLUES && rangeStart - rangeEnd + 1 != len(clues) {
+		if rangeStart != 0 {
+			rangeStart--
+		}
+
+		if rangeEnd != len(clues) - 1 {
+			rangeEnd++
+		}
+	}
+
 	activeClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
 	crossClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EFC1F3"))
-	acrossClues := list.New().
+	clueList := list.New().
 		Enumerator(func(_ list.Items, i int) string {
-			return fmt.Sprintf("%d. ",puz.AcrossClues[i].Num)
-		}).
-		ItemStyleFunc(func(items list.Items, i int) lipgloss.Style {
-			if currentAcrossClue.Num == puz.AcrossClues[i].Num {
-				if solvingOrientation == Horizontal {
-					return activeClueStyle
-				} else {
-					return crossClueStyle
-				}
-			}
-				return lipgloss.NewStyle()
-		})
-	downClues := list.New().
-		Enumerator(func(_ list.Items, i int) string {
-			return fmt.Sprintf("%d. ",puz.DownClues[i].Num)
+			return fmt.Sprintf("%d. ", clues[i + rangeStart].Num)
 		}).
 		ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
-			if currentDownClue.Num == puz.DownClues[i].Num {
-				if solvingOrientation == Vertical {
+			if currentClue.Num == clues[i + rangeStart].Num {
+				if solvingOrientation == orientation {
 					return activeClueStyle
 				} else {
 					return crossClueStyle
@@ -92,14 +101,19 @@ func organizeClues(puz *puzzle.PuzzleDefinition) (*list.List, *list.List) {
 			}
 				return lipgloss.NewStyle()
 		})
+
+	for i := rangeStart; i <= rangeEnd; i++ {
+		clueList.Item(clues[i].Clue)	
+	}
+
+	rendered := clueList.String()
+	if rangeStart != 0 {
+		rendered  = lipgloss.JoinVertical(lipgloss.Left, "...", rendered)
+	}
 	
- 	for _, clue := range puz.AcrossClues {
-		acrossClues.Item(clue.Clue)
+	if rangeEnd != len(clues) - 1 {
+		rendered = lipgloss.JoinVertical(lipgloss.Left, rendered, "...")
 	}
 
-	for _, clue := range puz.DownClues {
-		downClues.Item(clue.Clue)
-	}
-
-	return acrossClues, downClues
+	return rendered
 }
