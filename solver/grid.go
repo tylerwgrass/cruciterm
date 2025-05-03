@@ -110,21 +110,29 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				(*m.navigator.grid)[m.cursorY][m.cursorX].content = "-"
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
-					withDirection(Reverse).
+					withMoveDirection(Reverse).
+					withJumpDirection(Reverse).
+					withJumpLocation(ClueEnd).
 					advanceCursor(m.cursorX, m.cursorY)
 			case key.Matches(msg, keys.ToggleDirection):
 				m.changeNavOrientation()
 			case key.Matches(msg, keys.PrevClue):
 				halters = make([]IHalter, 0, 2)
 				halters = append(halters, makeHalter(ClueChange, false))
+				if prefs.GetBool(prefs.JumpToEmptySquare) {
+					halters = append(halters, makeHalter(EmptySquare, true))
+				}
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
-					withDirection(Reverse).
+					withJumpDirection(Reverse).
 					withHalters(halters).
 					advanceCursor(m.cursorX, m.cursorY)
 			case key.Matches(msg, keys.NextClue):
 				halters = make([]IHalter, 0, 2)
 				halters = append(halters, makeHalter(ClueChange, false))
+				if prefs.GetBool(prefs.JumpToEmptySquare) {
+					halters = append(halters, makeHalter(EmptySquare, true))
+				}
 				navStates = m.navigator.
 					withOrientation(m.navOrientation).
 					withHalters(halters).
@@ -136,7 +144,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				navStates = m.navigator.
 					withOrientation(Vertical).	
-					withDirection(Reverse).
+					withMoveDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case key.Matches(msg, keys.Down):
@@ -154,7 +162,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					break
 				}
 				navStates = m.navigator.
-					withDirection(Reverse).
+					withMoveDirection(Reverse).
 					withIterMode(Cardinal).
 					advanceCursor(m.cursorX, m.cursorY)
 			case key.Matches(msg, keys.Right):
