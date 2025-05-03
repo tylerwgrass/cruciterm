@@ -54,6 +54,7 @@ type NavigationState struct {
 	col int
 	didWrap bool
 	didChangeClue bool
+	haltedOnMatch bool
 }
 
 var defaultHalter = makeHalter(ValidSquare, false) 
@@ -178,6 +179,7 @@ func (navigator *Navigator) advanceCursor(startCol, startRow int) []NavigationSt
 func (navigator Navigator) iterateCardinal(state *NavigationState, halter IHalter) {
 	grid := *navigator.grid
 	if halter.CheckInitialSquare() && halter.Halt(&navigator, state) {
+		state.haltedOnMatch = true
 		return 
 	}
 	deltas := navigator.getDeltas()
@@ -193,6 +195,7 @@ func (navigator Navigator) iterateCardinal(state *NavigationState, halter IHalte
 			navigator.moveToNextValidCardinal(state)
 		} 
 		if halter.Halt(&navigator, state) {
+			state.haltedOnMatch = true
 			return 
 		}
 	}
@@ -201,11 +204,13 @@ func (navigator Navigator) iterateCardinal(state *NavigationState, halter IHalte
 func (navigator *Navigator) iterateClues(state *NavigationState, halter IHalter) {
 	grid := *navigator.grid
 	if halter.CheckInitialSquare() && halter.Halt(navigator, state) {
+		state.haltedOnMatch = true
 		return
 	}
 	var deltas NavigationDeltas
 	for {
 		if state.didWrap && state.row == state.startRow && state.col == state.startCol {
+			state.haltedOnMatch = false
 			break
 		} 
 		deltas = navigator.getDeltas()
@@ -219,6 +224,7 @@ func (navigator *Navigator) iterateClues(state *NavigationState, halter IHalter)
 		} 
 
 		if halter.Halt(navigator, state) {
+			state.haltedOnMatch = true
 			return
 		}
 	}
@@ -386,13 +392,14 @@ func (n Navigator) String() string {
 }
 
 func (ns NavigationState) String() string {
-	return fmt.Sprintf("NavigationState{Start: [%d, %d] End: [%d, %d], didWrap=%t, didChangeClue=%t}", 
+	return fmt.Sprintf("NavigationState{Start: [%d, %d] End: [%d, %d], didWrap=%t, didChangeClue=%t, haltedOnMatch=%t}", 
 		ns.startCol, 
 		ns.startRow,
 		ns.col,
 		ns.row,
 		ns.didWrap,
 		ns.didChangeClue,
+		ns.haltedOnMatch,
 	)
 }
 

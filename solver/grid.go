@@ -99,8 +99,8 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				didWrap = slices.ContainsFunc(navStates, func(ns NavigationState) bool {
 					return ns.didWrap
 				})
-				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-					m.changeNavOrientation()	
+				if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) && endNavState.haltedOnMatch {
+					m.changeNavOrientation()
 				} 
 				break
 			}
@@ -179,7 +179,7 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			didWrap = slices.ContainsFunc(navStates, func(ns NavigationState) bool {
 				return ns.didWrap
 			})
-			if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+			if didWrap && prefs.GetBool(prefs.SwapCursorOnGridWrap) && endNavState.haltedOnMatch {
 				m.changeNavOrientation()	
 			} 
     }
