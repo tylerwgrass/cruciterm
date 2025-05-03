@@ -73,7 +73,7 @@ func (m mainModel) View() string {
 		width = 500
 		height = 500
 	}
-	header := lipgloss.NewStyle().PaddingTop(10).Render(fmt.Sprintf("%s\n%s %s\n", m.title, m.author, m.copyright))
+	header := lipgloss.NewStyle().PaddingTop(height / 20).Render(fmt.Sprintf("%s\n%s %s\n", m.title, m.author, m.copyright))
 	if m.grid.solved {
 		header += "Solved!\n"
 	}
