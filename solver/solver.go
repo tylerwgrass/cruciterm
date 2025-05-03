@@ -73,7 +73,7 @@ func (m mainModel) View() string {
 		width = 500
 		height = 500
 	}
-	header := fmt.Sprintf("%s\n%s %s\n", m.title, m.author, m.copyright)
+	header := lipgloss.NewStyle().PaddingTop(10).Render(fmt.Sprintf("%s\n%s %s\n", m.title, m.author, m.copyright))
 	if m.grid.solved {
 		header += "Solved!\n"
 	}
@@ -89,7 +89,7 @@ func (m mainModel) View() string {
 			)),
 		footer,
 	)
-	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, mainContent)
+	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Top, mainContent)
 }
 
 func Run(puz *puzzle.PuzzleDefinition) {
