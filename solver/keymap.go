@@ -12,6 +12,7 @@ type keyMap struct {
 	NextClue 				key.Binding
 	PrevClue 				key.Binding
 	ToggleDirection key.Binding
+	ViewPreferences key.Binding
 }
 
 var keys = keyMap{
@@ -46,6 +47,10 @@ var keys = keyMap{
 		key.WithKeys(" "),
 		key.WithHelp("space", "change direction"),
 	),
+	ViewPreferences: key.NewBinding(
+		key.WithKeys("ctrl+p"),
+		key.WithHelp("ctrl+p", "change preferences"),
+	),
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -55,6 +60,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.NextClue, k.PrevClue}, 
-		{k.ToggleDirection, k.Quit},
+		{k.ToggleDirection},
+		{k.ViewPreferences, k.Quit},
 	}
 }

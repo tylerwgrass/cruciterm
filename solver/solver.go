@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
 	"github.com/charmbracelet/bubbles/v2/stopwatch"
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss/v2"
@@ -19,15 +20,24 @@ type mainModel struct {
 	copyright string
 	clues cluesModel
 	grid gridModel
+	preferences preferencesModel
 	stopwatch stopwatch.Model
 	help help.Model
+	activeView ActiveView
 }
+
+type ActiveView int
+const (
+	GridAndClues ActiveView = iota
+	Preferences
+)
 
 var solvingOrientation Orientation = Horizontal
 
 func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	grid := initGridModel(puz)
 	clues := initCluesModel(puz)
+	preferences := initPreferencesModel()
 	stopwatch := stopwatch.New()
 	help := help.New()
 	help.ShowAll = true
@@ -39,6 +49,8 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 		grid: grid,
 		clues: clues,
 		help: help,
+		activeView: GridAndClues,
+		preferences: preferences,
 	}
 }
 
@@ -49,11 +61,24 @@ func (m mainModel) Init() tea.Cmd {
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c":
+		switch {
+		case key.Matches(msg, keys.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, keys.ViewPreferences):
+			if m.activeView == Preferences {
+				m.activeView = GridAndClues
+			} else {
+				m.activeView = Preferences
+			}
 		}
 	}
+
+	if m.activeView == Preferences {
+		preferences, _ := m.preferences.Update(msg)
+		m.preferences = preferences.(preferencesModel)
+		return m, nil 
+	}
+
 	grid, _ := m.grid.Update(msg)
 	m.grid = grid.(gridModel)
 	solvingOrientation = m.grid.navOrientation
@@ -67,6 +92,14 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m mainModel) View() string {
+	if m.activeView == Preferences {
+		return m.preferences.View()
+	}
+	
+	return m.getSolverView()
+}
+
+func (m mainModel) getSolverView() string {
 	width, height, err := term.GetSize(0)
 	if err != nil {
 		logger.Debug("Failed to get terminal size")
