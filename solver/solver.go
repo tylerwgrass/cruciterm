@@ -15,18 +15,19 @@ import (
 )
 
 type mainModel struct {
-	title string
-	author string
-	copyright string
-	clues cluesModel
-	grid gridModel
+	title       string
+	author      string
+	copyright   string
+	clues       cluesModel
+	grid        gridModel
 	preferences preferencesModel
-	stopwatch stopwatch.Model
-	help help.Model
-	activeView ActiveView
+	stopwatch   stopwatch.Model
+	help        help.Model
+	activeView  ActiveView
 }
 
 type ActiveView int
+
 const (
 	GridAndClues ActiveView = iota
 	Preferences
@@ -42,14 +43,14 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	help := help.New()
 	help.ShowAll = true
 	return mainModel{
-		stopwatch: stopwatch,
-		title: puz.Title,
-		author: puz.Author,
-		copyright: puz.Copyright,
-		grid: grid,
-		clues: clues,
-		help: help,
-		activeView: GridAndClues,
+		stopwatch:   stopwatch,
+		title:       puz.Title,
+		author:      puz.Author,
+		copyright:   puz.Copyright,
+		grid:        grid,
+		clues:       clues,
+		help:        help,
+		activeView:  GridAndClues,
 		preferences: preferences,
 	}
 }
@@ -76,7 +77,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.activeView == Preferences {
 		preferences, _ := m.preferences.Update(msg)
 		m.preferences = preferences.(preferencesModel)
-		return m, nil 
+		return m, nil
 	}
 
 	grid, _ := m.grid.Update(msg)
@@ -95,7 +96,7 @@ func (m mainModel) View() string {
 	if m.activeView == Preferences {
 		return m.preferences.View()
 	}
-	
+
 	return m.getSolverView()
 }
 
@@ -110,7 +111,7 @@ func (m mainModel) getSolverView() string {
 	if m.grid.solved {
 		header += "Solved!\n"
 	}
-	footer := m.help.View(keys) 
+	footer := m.help.View(keys)
 	mainContent := lipgloss.JoinVertical(
 		lipgloss.Center,
 		header,
@@ -128,7 +129,7 @@ func (m mainModel) getSolverView() string {
 func Run(puz *puzzle.PuzzleDefinition) {
 	p := tea.NewProgram(initMainModel(puz), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-			fmt.Printf("Alas, there's been an error: %v", err)
-			os.Exit(1)
+		fmt.Printf("Alas, there's been an error: %v", err)
+		os.Exit(1)
 	}
 }

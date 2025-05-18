@@ -14,7 +14,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
-var ErrFileParse = fmt.Errorf("could not parse file");
+var ErrFileParse = fmt.Errorf("could not parse file")
 var ErrFileNotSupported = fmt.Errorf("file type not supported")
 
 func LoadFile(path string) (puzzle.PuzzleDefinition, error) {
@@ -27,7 +27,7 @@ func LoadFile(path string) (puzzle.PuzzleDefinition, error) {
 
 // .puz file definition: https://code.google.com/archive/p/puz/wikis/FileFormat.wiki
 func loadPuzFile(path string) (puzzle.PuzzleDefinition, error) {
-	file, err := os.Open(path) 
+	file, err := os.Open(path)
 	if err != nil {
 		return puzzle.PuzzleDefinition{}, err
 	}
@@ -77,7 +77,7 @@ func parseState(puz *puzzle.PuzzleDefinition, file *os.File) error {
 		return err
 	}
 	numCells := puz.NumCols * puz.NumRows
-	puzzleState := make([]byte, numCells * 2)
+	puzzleState := make([]byte, numCells*2)
 	if _, err := file.Read(puzzleState); err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func parseContent(puz *puzzle.PuzzleDefinition, file *os.File) error {
 	decoder := transform.NewReader(file, charmap.ISO8859_1.NewDecoder())
 	reader := bufio.NewReader(decoder)
 	delim := byte(0)
-	content := make([]string, puz.NumClues + 4)
+	content := make([]string, puz.NumClues+4)
 	index := 0
 	for index < len(content) {
 		contentBytes, err := reader.ReadBytes(delim)
@@ -100,7 +100,7 @@ func parseContent(puz *puzzle.PuzzleDefinition, file *os.File) error {
 			}
 			return err
 		}
-		content[index] = string(contentBytes[:len(contentBytes) - 1])
+		content[index] = string(contentBytes[:len(contentBytes)-1])
 		index++
 	}
 
@@ -108,6 +108,6 @@ func parseContent(puz *puzzle.PuzzleDefinition, file *os.File) error {
 	puz.Author = content[1]
 	puz.Copyright = content[2]
 	puz.Notes = content[len(content)-1]
-	puz.AssignClues(content[3:len(content)-1])
+	puz.AssignClues(content[3 : len(content)-1])
 	return nil
 }

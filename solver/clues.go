@@ -20,16 +20,16 @@ var currentAcrossClue *puzzle.Clue
 var currentDownClue *puzzle.Clue
 
 type cluesModel struct {
-	acrossClues []*puzzle.Clue
-	downClues []*puzzle.Clue
+	acrossClues           []*puzzle.Clue
+	downClues             []*puzzle.Clue
 	activeClueOrientation Orientation
 }
 
 func initCluesModel(puz *puzzle.PuzzleDefinition) cluesModel {
 	acrossClues, downClues = puz.AcrossClues, puz.DownClues
 	return cluesModel{
-		acrossClues: puz.AcrossClues,
-		downClues: puz.DownClues,
+		acrossClues:           puz.AcrossClues,
+		downClues:             puz.DownClues,
 		activeClueOrientation: Horizontal,
 	}
 }
@@ -43,44 +43,44 @@ func (m cluesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m cluesModel) View() string {
-	CONTAINER_WIDTH := 80 
+	CONTAINER_WIDTH := 80
 	COLUMN_WIDTH := 36
 	clueContainerStyle := lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder()).
-			Width(CONTAINER_WIDTH).
-			Padding(0, 2)
+		Border(lipgloss.NormalBorder()).
+		Width(CONTAINER_WIDTH).
+		Padding(0, 2)
 	renderedAcrossClues := getClueRendering(currentAcrossClue, acrossClues, Horizontal)
 	renderedDownClues := getClueRendering(currentDownClue, downClues, Vertical)
 	return clueContainerStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top,
 		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
-			lipgloss.JoinVertical( lipgloss.Left,
+			lipgloss.JoinVertical(lipgloss.Left,
 				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ ACROSS ~~~"),
 				renderedAcrossClues,
-			)), 
+			)),
 		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
 			lipgloss.JoinVertical(
 				lipgloss.Left,
 				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ DOWN ~~~"),
 				renderedDownClues,
-		)),
+			)),
 	))
 }
 
 func getClueRendering(currentClue *puzzle.Clue, clues []*puzzle.Clue, orientation Orientation) string {
 	var currentClueIndex int
-	for i, clue := range(clues) {
+	for i, clue := range clues {
 		if clue == currentClue {
 			currentClueIndex = i
 			break
 		}
 	}
 	rangeStart, rangeEnd := currentClueIndex, currentClueIndex
-	for rangeEnd - rangeStart + 1 < NUM_SHOWN_CLUES && rangeStart - rangeEnd + 1 != len(clues) {
+	for rangeEnd-rangeStart+1 < NUM_SHOWN_CLUES && rangeStart-rangeEnd+1 != len(clues) {
 		if rangeStart != 0 {
 			rangeStart--
 		}
 
-		if rangeEnd != len(clues) - 1 {
+		if rangeEnd != len(clues)-1 {
 			rangeEnd++
 		}
 	}
@@ -89,29 +89,29 @@ func getClueRendering(currentClue *puzzle.Clue, clues []*puzzle.Clue, orientatio
 	crossClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EFC1F3"))
 	clueList := list.New().
 		Enumerator(func(_ list.Items, i int) string {
-			return fmt.Sprintf("%d. ", clues[i + rangeStart].Num)
+			return fmt.Sprintf("%d. ", clues[i+rangeStart].Num)
 		}).
 		ItemStyleFunc(func(_ list.Items, i int) lipgloss.Style {
-			if currentClue.Num == clues[i + rangeStart].Num {
+			if currentClue.Num == clues[i+rangeStart].Num {
 				if solvingOrientation == orientation {
 					return activeClueStyle
 				} else {
 					return crossClueStyle
 				}
 			}
-				return lipgloss.NewStyle()
+			return lipgloss.NewStyle()
 		})
 
 	for i := rangeStart; i <= rangeEnd; i++ {
-		clueList.Item(clues[i].Clue)	
+		clueList.Item(clues[i].Clue)
 	}
 
 	rendered := clueList.String()
 	if rangeStart != 0 {
-		rendered  = lipgloss.JoinVertical(lipgloss.Left, "...", rendered)
+		rendered = lipgloss.JoinVertical(lipgloss.Left, "...", rendered)
 	}
-	
-	if rangeEnd != len(clues) - 1 {
+
+	if rangeEnd != len(clues)-1 {
 		rendered = lipgloss.JoinVertical(lipgloss.Left, rendered, "...")
 	}
 

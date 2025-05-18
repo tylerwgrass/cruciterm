@@ -9,37 +9,41 @@ import (
 )
 
 type Cell struct {
-	content string
-	acrossClue *puzzle.Clue
-	downClue *puzzle.Clue 
-	nextAcross *puzzle.Clue  
-	nextDown *puzzle.Clue  
-	prevAcross *puzzle.Clue 
-	prevDown *puzzle.Clue 
+	content         string
+	acrossClue      *puzzle.Clue
+	downClue        *puzzle.Clue
+	nextAcross      *puzzle.Clue
+	nextDown        *puzzle.Clue
+	prevAcross      *puzzle.Clue
+	prevDown        *puzzle.Clue
 	isAcrossClueEnd bool
-	isDownClueEnd bool
+	isDownClueEnd   bool
 }
 
 type IterationMode int
+
 const (
 	Clues IterationMode = iota
 	Cardinal
 )
+
 type JumpLocation int
+
 const (
 	ClueStart JumpLocation = iota
 	ClueEnd
 )
+
 type NavigationGrid [][]Cell
 
 type Navigator struct {
-	grid *NavigationGrid
-	orientation Orientation
+	grid          *NavigationGrid
+	orientation   Orientation
 	moveDirection Direction
 	jumpDirection Direction
-	jumpLocation JumpLocation
-	iterMode IterationMode
-	halters []IHalter
+	jumpLocation  JumpLocation
+	iterMode      IterationMode
+	halters       []IHalter
 }
 
 type NavigationDeltas struct {
@@ -48,26 +52,27 @@ type NavigationDeltas struct {
 }
 
 type NavigationState struct {
-	startRow int
-	startCol int
-	row int
-	col int
-	didWrap bool
+	startRow      int
+	startCol      int
+	row           int
+	col           int
+	didWrap       bool
 	didChangeClue bool
 	haltedOnMatch bool
 }
 
-var defaultHalter = makeHalter(ValidSquare, false) 
+var defaultHalter = makeHalter(ValidSquare, false)
+
 func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigator {
 	navGrid := make(NavigationGrid, len(puzzleGrid))
 	acrosses := puzzle.AcrossClues
 	downs := puzzle.DownClues
 	currentAcrossIndex := 0
 	currentDownIndex := 0
-	prevAcross := acrosses[len(acrosses) - 1]
-	nextAcross := acrosses[(currentAcrossIndex + 1) % len(acrosses)]
-	prevDown := downs[len(downs) - 1]
-	nextDown := downs[(currentDownIndex + 1) % len(downs)]
+	prevAcross := acrosses[len(acrosses)-1]
+	nextAcross := acrosses[(currentAcrossIndex+1)%len(acrosses)]
+	prevDown := downs[len(downs)-1]
+	nextDown := downs[(currentDownIndex+1)%len(downs)]
 
 	for row := range puz.NumRows {
 		navGrid[row] = make([]Cell, len(puzzleGrid[0]))
@@ -75,15 +80,15 @@ func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigato
 			if row == nextAcross.StartRow && col == nextAcross.StartCol {
 				prevAcross = acrosses[currentAcrossIndex]
 				currentAcrossIndex = (currentAcrossIndex + 1) % len(acrosses)
-				nextAcross = acrosses[(currentAcrossIndex + 1) % len(acrosses)]
+				nextAcross = acrosses[(currentAcrossIndex+1)%len(acrosses)]
 			}
 			if row == nextDown.StartRow && col == nextDown.StartCol {
 				prevDown = downs[currentDownIndex]
 				currentDownIndex = (currentDownIndex + 1) % len(downs)
-				nextDown = downs[(currentDownIndex + 1) % len(downs)]
+				nextDown = downs[(currentDownIndex+1)%len(downs)]
 			}
 			cell := Cell{
-				content: puzzleGrid[row][col], 
+				content: puzzleGrid[row][col],
 			}
 			if col == acrosses[currentAcrossIndex].EndCol {
 				cell.isAcrossClueEnd = true
@@ -97,25 +102,25 @@ func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigato
 				cell.prevDown = prevDown
 				cell.nextDown = nextDown
 				cell.acrossClue = acrosses[currentAcrossIndex]
-				if row == 0 || navGrid[row - 1][col].content == "." {
+				if row == 0 || navGrid[row-1][col].content == "." {
 					cell.downClue = downs[currentDownIndex]
 				} else {
-					cell.downClue = navGrid[row - 1][col].downClue
-					cell.nextDown = navGrid[row - 1][col].nextDown
-					cell.prevDown = navGrid[row - 1][col].prevDown
+					cell.downClue = navGrid[row-1][col].downClue
+					cell.nextDown = navGrid[row-1][col].nextDown
+					cell.prevDown = navGrid[row-1][col].prevDown
 				}
 			}
 			navGrid[row][col] = cell
 		}
 	}
 	return &Navigator{
-		grid: &navGrid,
-		orientation: Horizontal,
+		grid:          &navGrid,
+		orientation:   Horizontal,
 		moveDirection: Forward,
 		jumpDirection: Forward,
-		jumpLocation: ClueStart,
-		iterMode: Clues,
-		halters: []IHalter{defaultHalter},
+		jumpLocation:  ClueStart,
+		iterMode:      Clues,
+		halters:       []IHalter{defaultHalter},
 	}
 }
 func (n *Navigator) resetNavigatorOptions() {
@@ -134,12 +139,12 @@ func (n *Navigator) withOrientation(o Orientation) *Navigator {
 
 func (n *Navigator) withMoveDirection(d Direction) *Navigator {
 	n.moveDirection = d
-	return n 
+	return n
 }
 
 func (n *Navigator) withJumpDirection(d Direction) *Navigator {
 	n.jumpDirection = d
-	return n 
+	return n
 }
 func (n *Navigator) withJumpLocation(l JumpLocation) *Navigator {
 	n.jumpLocation = l
@@ -163,7 +168,7 @@ func (n *Navigator) withIterMode(i IterationMode) *Navigator {
 
 func (navigator *Navigator) advanceCursor(startCol, startRow int) []NavigationState {
 	navStates := make([]NavigationState, 0, len(navigator.halters))
-	for _, halter := range(navigator.halters) {
+	for _, halter := range navigator.halters {
 		navState := NavigationState{row: startRow, col: startCol, startRow: startRow, startCol: startCol}
 		if navigator.iterMode == Cardinal {
 			navigator.iterateCardinal(&navState, halter)
@@ -180,23 +185,23 @@ func (navigator Navigator) iterateCardinal(state *NavigationState, halter IHalte
 	grid := *navigator.grid
 	if halter.CheckInitialSquare() && halter.Halt(&navigator, state) {
 		state.haltedOnMatch = true
-		return 
+		return
 	}
 	deltas := navigator.getDeltas()
 	for {
 		if state.didWrap && state.row == state.startRow && state.col == state.startCol {
 			return
 		}
-		nextRow, nextCol := state.row + deltas.dr, state.col + deltas.dc
+		nextRow, nextCol := state.row+deltas.dr, state.col+deltas.dc
 		if grid.isVisitable(nextRow, nextCol) {
 			state.row = nextRow
 			state.col = nextCol
 		} else {
 			navigator.moveToNextValidCardinal(state)
-		} 
+		}
 		if halter.Halt(&navigator, state) {
 			state.haltedOnMatch = true
-			return 
+			return
 		}
 	}
 }
@@ -212,32 +217,32 @@ func (navigator *Navigator) iterateClues(state *NavigationState, halter IHalter)
 		if state.didWrap && state.row == state.startRow && state.col == state.startCol {
 			state.haltedOnMatch = false
 			break
-		} 
+		}
 		deltas = navigator.getDeltas()
-		nextRow, nextCol := state.row + deltas.dr, state.col + deltas.dc
+		nextRow, nextCol := state.row+deltas.dr, state.col+deltas.dc
 		if grid.isVisitable(nextRow, nextCol) {
 			state.row = nextRow
 			state.col = nextCol
 		} else {
 			navigator.moveToNextClue(state)
 			state.didChangeClue = true
-		} 
+		}
 
 		if halter.Halt(navigator, state) {
 			state.haltedOnMatch = true
 			return
 		}
 	}
-} 
+}
 
 func (navigator Navigator) moveToNextValidCardinal(state *NavigationState) {
 	startRow, startCol := state.row, state.col
 	deltas := navigator.getDeltas()
 	grid := *navigator.grid
 	for ok := true; ok; ok = !grid.isVisitable(state.row, state.col) {
-		nextRow, nextCol := state.row + deltas.dr, state.col + deltas.dc
+		nextRow, nextCol := state.row+deltas.dr, state.col+deltas.dc
 		if !prefs.GetBool(prefs.WrapOnArrowNavigation) {
-			if nextRow < 0 || nextRow > len(grid) - 1 || nextCol < 0 || nextCol > len(grid[0]) - 1 {
+			if nextRow < 0 || nextRow > len(grid)-1 || nextCol < 0 || nextCol > len(grid[0])-1 {
 				state.row, state.col = startRow, startCol
 				return
 			}
@@ -303,27 +308,27 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState) {
 	var nextClue *puzzle.Clue
 	if navigator.orientation == Horizontal {
 		currentClue = currentClueCell.acrossClue
-			if navigator.jumpDirection == Forward {
-				nextClue = currentClueCell.nextAcross 
-				if nextClue.Num < currentClue.Num {
-					state.didWrap = true
-					if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-						navigator.orientation = Vertical
-						cell := grid[currentClue.StartRow][currentClue.StartCol]
-						nextClue = cell.nextDown
-					}
-				}
-			} else {
-				nextClue = currentClueCell.prevAcross
-				if nextClue.Num > currentClue.Num {
-					state.didWrap = true
-					if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
-						navigator.orientation = Vertical
-						cell := grid[currentClue.StartRow][currentClue.StartCol]
-						nextClue = cell.prevDown
-					}
+		if navigator.jumpDirection == Forward {
+			nextClue = currentClueCell.nextAcross
+			if nextClue.Num < currentClue.Num {
+				state.didWrap = true
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					navigator.orientation = Vertical
+					cell := grid[currentClue.StartRow][currentClue.StartCol]
+					nextClue = cell.nextDown
 				}
 			}
+		} else {
+			nextClue = currentClueCell.prevAcross
+			if nextClue.Num > currentClue.Num {
+				state.didWrap = true
+				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
+					navigator.orientation = Vertical
+					cell := grid[currentClue.StartRow][currentClue.StartCol]
+					nextClue = cell.prevDown
+				}
+			}
+		}
 	} else {
 		currentClue = currentClueCell.downClue
 		if navigator.jumpDirection == Forward {
@@ -353,9 +358,9 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState) {
 	if navigator.jumpLocation == ClueEnd {
 		cell := grid[state.row][state.col]
 		if navigator.orientation == Horizontal {
-			state.row, state.col = cell.acrossClue.EndRow, cell.acrossClue.EndCol 
+			state.row, state.col = cell.acrossClue.EndRow, cell.acrossClue.EndCol
 		} else {
-			state.row, state.col = cell.downClue.EndRow, cell.downClue.EndCol 
+			state.row, state.col = cell.downClue.EndRow, cell.downClue.EndCol
 		}
 	}
 	state.didChangeClue = true
@@ -392,8 +397,8 @@ func (n Navigator) String() string {
 }
 
 func (ns NavigationState) String() string {
-	return fmt.Sprintf("NavigationState{Start: [%d, %d] End: [%d, %d], didWrap=%t, didChangeClue=%t, haltedOnMatch=%t}", 
-		ns.startCol, 
+	return fmt.Sprintf("NavigationState{Start: [%d, %d] End: [%d, %d], didWrap=%t, didChangeClue=%t, haltedOnMatch=%t}",
+		ns.startCol,
 		ns.startRow,
 		ns.col,
 		ns.row,
@@ -403,28 +408,28 @@ func (ns NavigationState) String() string {
 	)
 }
 
-
 func (c Cell) String() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("Cell{val:%s", c.content))
- 	if c.acrossClue != nil {
+	if c.acrossClue != nil {
 		sb.WriteString(fmt.Sprintf(", across: %v", c.acrossClue))
- 	}
- 	if c.downClue != nil {
+	}
+	if c.downClue != nil {
 		sb.WriteString(fmt.Sprintf(", down: %v", c.downClue))
- 	}
- 	if c.nextAcross != nil {
+	}
+	if c.nextAcross != nil {
 		sb.WriteString(fmt.Sprintf(", nextAcross: %v, ", c.nextAcross))
- 	}
- 	if c.nextDown != nil {
+	}
+	if c.nextDown != nil {
 		sb.WriteString(fmt.Sprintf(", nextDown: %v", c.nextDown))
- 	}
- 	if c.prevAcross != nil {
+	}
+	if c.prevAcross != nil {
 		sb.WriteString(fmt.Sprintf(", prevAcross: %v", c.prevAcross))
 	}
- 	if c.prevDown != nil {
+	if c.prevDown != nil {
 		sb.WriteString(fmt.Sprintf(", prevDown: %v", c.prevDown))
- 	}
- 	sb.WriteString("}")
+	}
+	sb.WriteString("}")
 	return sb.String()
 }
+

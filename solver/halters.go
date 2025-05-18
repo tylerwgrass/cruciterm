@@ -10,6 +10,7 @@ type Halter struct {
 }
 
 type halterType int
+
 const (
 	ValidSquare halterType = iota
 	EmptySquare
@@ -19,7 +20,7 @@ const (
 func makeHalter(hType halterType, checkInitialSquare bool) IHalter {
 	switch hType {
 	case ValidSquare:
-		return ValidSquareHalter{checkInitialSquare} 
+		return ValidSquareHalter{checkInitialSquare}
 	case EmptySquare:
 		return EmptySquareHalter{checkInitialSquare}
 	case ClueChange:
@@ -29,8 +30,9 @@ func makeHalter(hType halterType, checkInitialSquare bool) IHalter {
 }
 
 type ValidSquareHalter Halter
+
 func (h ValidSquareHalter) Halt(n *Navigator, state *NavigationState) bool {
-	return (*n.grid)[state.row][state.col].content != "." 
+	return (*n.grid)[state.row][state.col].content != "."
 }
 
 func (h ValidSquareHalter) CheckInitialSquare() bool {
@@ -38,6 +40,7 @@ func (h ValidSquareHalter) CheckInitialSquare() bool {
 }
 
 type EmptySquareHalter Halter
+
 func (h EmptySquareHalter) Halt(n *Navigator, state *NavigationState) bool {
 	return (*n.grid)[state.row][state.col].content == "-"
 }
@@ -47,6 +50,7 @@ func (h EmptySquareHalter) CheckInitialSquare() bool {
 }
 
 type ClueChangeHalter Halter
+
 func (h ClueChangeHalter) Halt(n *Navigator, state *NavigationState) bool {
 	return state.didChangeClue
 }
@@ -54,3 +58,4 @@ func (h ClueChangeHalter) Halt(n *Navigator, state *NavigationState) bool {
 func (h ClueChangeHalter) CheckInitialSquare() bool {
 	return h.checkInitialSquare
 }
+

@@ -6,35 +6,35 @@ import (
 )
 
 type PuzzleDefinition struct {
-	Title string
-	Author string
-	Copyright string
-	Version string
-	Notes string
-	NumRows int
-	NumCols int
-	NumClues int
-	AcrossClues []*Clue
-	DownClues []*Clue
-	Answer string
+	Title        string
+	Author       string
+	Copyright    string
+	Version      string
+	Notes        string
+	NumRows      int
+	NumCols      int
+	NumClues     int
+	AcrossClues  []*Clue
+	DownClues    []*Clue
+	Answer       string
 	CurrentState string
 }
 
 type Clue struct {
-	Num int
+	Num      int
 	StartRow int
 	StartCol int
-	EndRow int
-	EndCol int
-	Clue string
-	Answer string
+	EndRow   int
+	EndCol   int
+	Clue     string
+	Answer   string
 }
 
 var Clues map[int]Clue
 var AcrossClues []*Clue
 var DownClues []*Clue
 
-func (puz * PuzzleDefinition) AssignClues(clues []string) {
+func (puz *PuzzleDefinition) AssignClues(clues []string) {
 	Clues = make(map[int]Clue)
 	clueNum := 1
 	clueIndex := 0
@@ -46,13 +46,13 @@ func (puz * PuzzleDefinition) AssignClues(clues []string) {
 		row := i / puz.NumCols
 		col := i % puz.NumCols
 
-		isAcrossClueStart := col == 0 || string(puz.Answer[(puz.NumCols * (row)) + col - 1]) == "." 
-		isDownClueStart := row == 0 || string(puz.Answer[(puz.NumCols * (row - 1)) + col]) == "." 
+		isAcrossClueStart := col == 0 || string(puz.Answer[(puz.NumCols*(row))+col-1]) == "."
+		isDownClueStart := row == 0 || string(puz.Answer[(puz.NumCols*(row-1))+col]) == "."
 
-		if (!(isAcrossClueStart || isDownClueStart)) { 
+		if !(isAcrossClueStart || isDownClueStart) {
 			continue
 		}
-		
+
 		if isAcrossClueStart {
 			clue := puz.parseClue(clueNum, row, col, true)
 			clue.Clue = clues[clueIndex]
@@ -68,13 +68,13 @@ func (puz * PuzzleDefinition) AssignClues(clues []string) {
 		}
 		clueNum++
 	}
-	puz.AcrossClues = AcrossClues 
+	puz.AcrossClues = AcrossClues
 	puz.DownClues = DownClues
 }
 
 func (p PuzzleDefinition) parseClue(clueNumber, startRow, startCol int, isAcrossClue bool) *Clue {
 	clue := Clue{
-		Num: clueNumber,
+		Num:      clueNumber,
 		StartRow: startRow,
 		StartCol: startCol,
 	}
@@ -89,7 +89,7 @@ func (p PuzzleDefinition) parseClue(clueNumber, startRow, startCol int, isAcross
 	for ok := true; ok; ok = p.isVisitable(row, col) {
 		cellLocation := (row * p.NumCols) + col
 		sb.WriteString(string(p.Answer[cellLocation]))
-		row, col = row + dr, col + dc
+		row, col = row+dr, col+dc
 	}
 
 	if isAcrossClue {
@@ -98,39 +98,40 @@ func (p PuzzleDefinition) parseClue(clueNumber, startRow, startCol int, isAcross
 	} else {
 		clue.EndRow = row - 1
 		clue.EndCol = startCol
-	}	
+	}
 	clue.Answer = sb.String()
 	return &clue
 }
 
 func (p PuzzleDefinition) isVisitable(row, col int) bool {
 	return row < p.NumRows &&
-		col < p.NumCols && 
+		col < p.NumCols &&
 		row > -1 &&
 		col > -1 &&
-		string(p.Answer[(row * p.NumCols) + col]) != "."
+		string(p.Answer[(row*p.NumCols)+col]) != "."
 }
 
 func (p PuzzleDefinition) String() string {
 	output := "~~~Across Clues~~~\n"
-	for _, clue := range(p.AcrossClues) {
+	for _, clue := range p.AcrossClues {
 		output += fmt.Sprintf("%v\n", clue)
 	}
 	output += "~~~Down Clues~~~\n"
-	for _, clue := range(p.DownClues) {
+	for _, clue := range p.DownClues {
 		output += fmt.Sprintf("%v\n", clue)
 	}
 	return output
 }
 
 func (c Clue) String() string {
-	return fmt.Sprintf("Clue{num: %d, r: %d, c:%d, endr: %d, endc: %d, Clue: %s, Answer: %s}", 
+	return fmt.Sprintf("Clue{num: %d, r: %d, c:%d, endr: %d, endc: %d, Clue: %s, Answer: %s}",
 		c.Num,
 		c.StartRow,
 		c.StartCol,
 		c.EndRow,
 		c.EndCol,
 		c.Clue,
-		c.Answer,	
+		c.Answer,
 	)
 }
+

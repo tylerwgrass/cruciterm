@@ -10,7 +10,7 @@ import (
 var activePreferenceIndex int = 0
 
 type preferencesModel struct {
-	preferences []prefs.SetPreference
+	preferences     []prefs.SetPreference
 	preferencesList *list.List
 }
 
@@ -24,9 +24,9 @@ func preferencesEnumerator(l list.Items, i int) string {
 func initPreferencesModel() preferencesModel {
 	preferences := prefs.ListPreferences()
 	preferencesList := getPreferencesList(preferences)
-		
+
 	return preferencesModel{
-		preferences: preferences,
+		preferences:     preferences,
 		preferencesList: preferencesList,
 	}
 }
@@ -40,9 +40,9 @@ func (m preferencesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keys.Up):
-			activePreferenceIndex = max(activePreferenceIndex - 1, 0);
+			activePreferenceIndex = max(activePreferenceIndex-1, 0)
 		case key.Matches(msg, keys.Down):
-			activePreferenceIndex = min(activePreferenceIndex + 1, len(m.preferences) - 1);
+			activePreferenceIndex = min(activePreferenceIndex+1, len(m.preferences)-1)
 		case key.Matches(msg, keys.TogglePreference):
 			m.togglePreference(activePreferenceIndex)
 		}
@@ -61,8 +61,8 @@ func (m *preferencesModel) togglePreference(activePreferenceIndex int) {
 func getPreferencesList(preferences []prefs.SetPreference) *list.List {
 	preferencesList := list.New().
 		Enumerator(preferencesEnumerator)
-	
-	for _, setPref := range(preferences) {
+
+	for _, setPref := range preferences {
 		if setPref.Value == true {
 			preferencesList.Item(setPref.Pref.String() + " ✓")
 		} else {

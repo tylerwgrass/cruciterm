@@ -3,17 +3,17 @@ package solver
 import "github.com/charmbracelet/bubbles/v2/key"
 
 type keyMap struct {
-	Up 								key.Binding
-	Down 							key.Binding
-	Left 							key.Binding
-	Right 						key.Binding
-	Delete						key.Binding
-	Quit 							key.Binding
-	NextClue 					key.Binding
-	PrevClue 					key.Binding
-	ToggleDirection		key.Binding
-	TogglePreference	key.Binding
-	ViewPreferences		key.Binding
+	Up               key.Binding
+	Down             key.Binding
+	Left             key.Binding
+	Right            key.Binding
+	Delete           key.Binding
+	Quit             key.Binding
+	NextClue         key.Binding
+	PrevClue         key.Binding
+	ToggleDirection  key.Binding
+	TogglePreference key.Binding
+	ViewPreferences  key.Binding
 }
 
 var keys = keyMap{
@@ -65,7 +65,7 @@ func (k keyMap) ShortHelp() []key.Binding {
 
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.NextClue, k.PrevClue}, 
+		{k.NextClue, k.PrevClue},
 		{k.ToggleDirection},
 		{k.ViewPreferences, k.Quit},
 	}

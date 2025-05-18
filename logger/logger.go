@@ -18,3 +18,4 @@ func Debug(msg string) {
 	msg += "\n"
 	logger.logFile.WriteString(msg)
 }
+

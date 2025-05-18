@@ -8,11 +8,12 @@ import (
 //go:generate stringer -type=Preference
 type Preference int
 type SetPreference struct {
-	Pref Preference
+	Pref  Preference
 	Value interface{}
 }
 type Preferences map[Preference]interface{}
-var prefs Preferences 
+
+var prefs Preferences
 
 const (
 	JumpToEmptySquare Preference = iota
@@ -24,10 +25,10 @@ const (
 
 var defaultPreferences = Preferences{
 	SwapCursorOnDirectionChange: true,
-	SwapCursorOnGridWrap: true,
-	WrapOnArrowNavigation: false,
-	WrapAtEndOfGrid: true,
-	JumpToEmptySquare: true,
+	SwapCursorOnGridWrap:        true,
+	WrapOnArrowNavigation:       false,
+	WrapAtEndOfGrid:             true,
+	JumpToEmptySquare:           true,
 }
 
 func Init() {
@@ -39,7 +40,7 @@ func ListPreferences() []SetPreference {
 
 	for key := JumpToEmptySquare; key <= WrapOnArrowNavigation; key++ {
 		prefSetting := SetPreference{
-			Pref: key,
+			Pref:  key,
 			Value: prefs[key],
 		}
 		preferenceSettings = append(preferenceSettings, prefSetting)
