@@ -1,12 +1,9 @@
 package solver
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/v2/key"
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss/v2/list"
-	"github.com/tylerwgrass/cruciterm/logger"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 )
 
@@ -14,7 +11,7 @@ var activePreferenceIndex int = 0
 
 type preferencesModel struct {
 	preferences []prefs.SetPreference
-	preferencesList *list.List 
+	preferencesList *list.List
 }
 
 func preferencesEnumerator(l list.Items, i int) string {
@@ -29,10 +26,9 @@ func initPreferencesModel() preferencesModel {
 	preferencesList := getPreferencesList(preferences)
 		
 	return preferencesModel{
-		preferences: preferences, 
+		preferences: preferences,
 		preferencesList: preferencesList,
-	} 
-	
+	}
 }
 
 func (m preferencesModel) Init() tea.Cmd {
@@ -43,10 +39,12 @@ func (m preferencesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-			case key.Matches(msg, keys.Up):
-				activePreferenceIndex = max(activePreferenceIndex - 1, 0);
-			case key.Matches(msg, keys.Down):
-				activePreferenceIndex = min(activePreferenceIndex + 1, len(m.preferences) - 1);
+		case key.Matches(msg, keys.Up):
+			activePreferenceIndex = max(activePreferenceIndex - 1, 0);
+		case key.Matches(msg, keys.Down):
+			activePreferenceIndex = min(activePreferenceIndex + 1, len(m.preferences) - 1);
+		case key.Matches(msg, keys.TogglePreference):
+			m.togglePreference(activePreferenceIndex)
 		}
 	}
 
@@ -54,8 +52,13 @@ func (m preferencesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *preferencesModel) togglePreference(activePreferenceIndex int) {
+	pref, val := m.preferences[activePreferenceIndex].Pref, m.preferences[activePreferenceIndex].Value.(bool)
+	m.preferences[activePreferenceIndex].Value = !val
+	prefs.SetBool(pref, !val)
+}
+
 func getPreferencesList(preferences []prefs.SetPreference) *list.List {
-	logger.Debug(fmt.Sprintf("active index: %v", activePreferenceIndex))
 	preferencesList := list.New().
 		Enumerator(preferencesEnumerator)
 	
@@ -70,5 +73,5 @@ func getPreferencesList(preferences []prefs.SetPreference) *list.List {
 }
 
 func (m preferencesModel) View() string {
-	return m.preferencesList.String() 
+	return m.preferencesList.String()
 }

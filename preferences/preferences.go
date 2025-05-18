@@ -37,7 +37,7 @@ func Init() {
 func ListPreferences() []SetPreference {
 	preferenceSettings := make([]SetPreference, 0, len(defaultPreferences))
 
-	for key := range(prefs) {
+	for key := JumpToEmptySquare; key <= WrapOnArrowNavigation; key++ {
 		prefSetting := SetPreference{
 			Pref: key,
 			Value: prefs[key],
@@ -54,6 +54,14 @@ func Get(k Preference) interface{} {
 
 func GetBool(k Preference) bool {
 	return Get(k).(bool)
+}
+
+func Set(k Preference, v interface{}) {
+	prefs[k] = v
+}
+
+func SetBool(k Preference, v bool) {
+	Set(k, v)
 }
 
 func (p Preferences) String() string {

@@ -3,16 +3,17 @@ package solver
 import "github.com/charmbracelet/bubbles/v2/key"
 
 type keyMap struct {
-	Up 							key.Binding
-	Down 						key.Binding
-	Left 						key.Binding
-	Right 					key.Binding
-	Delete					key.Binding
-	Quit 						key.Binding
-	NextClue 				key.Binding
-	PrevClue 				key.Binding
-	ToggleDirection key.Binding
-	ViewPreferences key.Binding
+	Up 								key.Binding
+	Down 							key.Binding
+	Left 							key.Binding
+	Right 						key.Binding
+	Delete						key.Binding
+	Quit 							key.Binding
+	NextClue 					key.Binding
+	PrevClue 					key.Binding
+	ToggleDirection		key.Binding
+	TogglePreference	key.Binding
+	ViewPreferences		key.Binding
 }
 
 var keys = keyMap{
@@ -44,12 +45,17 @@ var keys = keyMap{
 		key.WithHelp("shift+tab", "previous clue"),
 	),
 	ToggleDirection: key.NewBinding(
-		key.WithKeys(" "),
+		key.WithKeys("space"),
 		key.WithHelp("space", "change direction"),
 	),
 	ViewPreferences: key.NewBinding(
 		key.WithKeys("ctrl+p"),
 		key.WithHelp("ctrl+p", "change preferences"),
+	),
+	// Preferences View keys
+	TogglePreference: key.NewBinding(
+		key.WithKeys("space"),
+		key.WithHelp("space", "toggle preference"),
 	),
 }
 

@@ -26,7 +26,7 @@ func main() {
 	if len(os.Args) == 2 {
 		puzFilePath = os.Args[1]
 	}
-
+	
 	puz, err := loader.LoadFile(puzFilePath)
 	if err != nil {
 		fmt.Println(err)
