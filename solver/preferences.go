@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss/v2/list"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
+	"github.com/tylerwgrass/cruciterm/theme"
 )
 
 var activePreferenceIndex int = 0
@@ -62,16 +63,19 @@ func getPreferencesList(preferences []prefs.SetPreference) *list.List {
 	preferencesList := list.New().
 		Enumerator(preferencesEnumerator)
 
+	enabledIcon := theme.Get().Foreground(theme.Green()).Render(" ✓")
+	disabledIcon := theme.Get().Foreground(theme.Red()).Render(" x")
+
 	for _, setPref := range preferences {
 		if setPref.Value == true {
-			preferencesList.Item(setPref.Pref.String() + " ✓")
+			preferencesList.Item(setPref.Pref.String() + enabledIcon)
 		} else {
-			preferencesList.Item(setPref.Pref.String() + " x")
+			preferencesList.Item(setPref.Pref.String() + disabledIcon)
 		}
 	}
 	return preferencesList
 }
 
 func (m preferencesModel) View() string {
-	return m.preferencesList.String()
+	return theme.Get().Render(m.preferencesList.String())
 }

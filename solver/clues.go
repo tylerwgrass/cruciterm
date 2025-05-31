@@ -7,11 +7,8 @@ import (
 	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/lipgloss/v2/list"
 	"github.com/tylerwgrass/cruciterm/puzzle"
+	"github.com/tylerwgrass/cruciterm/theme"
 )
-
-var baseStyle = lipgloss.NewStyle().
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240"))
 
 var NUM_SHOWN_CLUES int = 9
 var acrossClues []*puzzle.Clue
@@ -45,22 +42,24 @@ func (m cluesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m cluesModel) View() string {
 	CONTAINER_WIDTH := 80
 	COLUMN_WIDTH := 36
-	clueContainerStyle := lipgloss.NewStyle().
+	clueContainerStyle := theme.Get().
 		Border(lipgloss.NormalBorder()).
 		Width(CONTAINER_WIDTH).
 		Padding(0, 2)
 	renderedAcrossClues := getClueRendering(currentAcrossClue, acrossClues, Horizontal)
 	renderedDownClues := getClueRendering(currentDownClue, downClues, Vertical)
+	acrossHeader := theme.Apply("~~~ ACROSS ~~~")
+	downHeader := theme.Apply("~~~ DOWN ~~~")
 	return clueContainerStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top,
-		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
+		theme.Get().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
 			lipgloss.JoinVertical(lipgloss.Left,
-				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ ACROSS ~~~"),
+				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, acrossHeader),
 				renderedAcrossClues,
 			)),
-		lipgloss.NewStyle().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
+		theme.Get().Width(COLUMN_WIDTH).Border(lipgloss.HiddenBorder()).Render(
 			lipgloss.JoinVertical(
 				lipgloss.Left,
-				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, "~~~ DOWN ~~~"),
+				lipgloss.PlaceHorizontal(COLUMN_WIDTH, lipgloss.Center, downHeader),
 				renderedDownClues,
 			)),
 	))
@@ -85,8 +84,9 @@ func getClueRendering(currentClue *puzzle.Clue, clues []*puzzle.Clue, orientatio
 		}
 	}
 
-	activeClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8"))
-	crossClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#EFC1F3"))
+	activeClueStyle := theme.Get().Foreground(theme.Primary())
+	crossClueStyle := theme.Get().Foreground(theme.Secondary())
+
 	clueList := list.New().
 		Enumerator(func(_ list.Items, i int) string {
 			return fmt.Sprintf("%d. ", clues[i+rangeStart].Num)
@@ -99,7 +99,7 @@ func getClueRendering(currentClue *puzzle.Clue, clues []*puzzle.Clue, orientatio
 					return crossClueStyle
 				}
 			}
-			return lipgloss.NewStyle()
+			return theme.Get()
 		})
 
 	for i := rangeStart; i <= rangeEnd; i++ {

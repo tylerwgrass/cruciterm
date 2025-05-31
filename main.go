@@ -9,6 +9,7 @@ import (
 	"github.com/tylerwgrass/cruciterm/logger"
 	"github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/solver"
+	"github.com/tylerwgrass/cruciterm/theme"
 )
 
 var TEST_FILE_PATH string = "./puzzles/test.puz"
@@ -32,6 +33,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	theme.Init()
 	preferences.Init()
 	solver.Run(&puz)
 }

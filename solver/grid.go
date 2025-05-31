@@ -7,9 +7,9 @@ import (
 
 	"github.com/charmbracelet/bubbles/v2/key"
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
 	prefs "github.com/tylerwgrass/cruciterm/preferences"
 	"github.com/tylerwgrass/cruciterm/puzzle"
+	"github.com/tylerwgrass/cruciterm/theme"
 )
 
 type Direction int
@@ -192,20 +192,20 @@ func (m gridModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m gridModel) View() string {
-	activeClueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
-	var sb strings.Builder
+	activeClueStyle := theme.Get().Foreground(theme.Primary())
+	sb := theme.NewThemedStringBuilder(theme.Get())
 	var cursor string
 	if m.navOrientation == Horizontal {
 		cursor = ">"
 	} else {
 		cursor = "v"
 	}
-	cursor = activeClueStyle.Render(cursor)
+
 	for i, row := range *m.navigator.grid {
 		sb.WriteString(" ")
 		for j, cell := range row {
 			if i == m.cursorY && j == m.cursorX && !m.solved {
-				sb.WriteString(cursor + " ")
+				sb.WriteStyledString(cursor+" ", activeClueStyle)
 				continue
 			}
 			switch cell.content {
@@ -213,13 +213,13 @@ func (m gridModel) View() string {
 				sb.WriteString("■ ")
 			case "-":
 				if m.isCellInActiveClue(i, j) {
-					sb.WriteString(activeClueStyle.Render("_ "))
+					sb.WriteStyledString("_ ", activeClueStyle)
 				} else {
 					sb.WriteString("  ")
 				}
 			default:
 				if m.isCellInActiveClue(i, j) {
-					sb.WriteString(activeClueStyle.Render(cell.content + " "))
+					sb.WriteStyledString(cell.content+" ", activeClueStyle)
 				} else {
 					sb.WriteString(cell.content + " ")
 				}
@@ -230,7 +230,7 @@ func (m gridModel) View() string {
 		}
 	}
 
-	return baseStyle.Render(sb.String())
+	return sb.String()
 }
 
 func (m gridModel) isCellInActiveClue(row, col int) bool {

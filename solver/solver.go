@@ -9,12 +9,13 @@ import (
 	"github.com/charmbracelet/bubbles/v2/stopwatch"
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss/v2"
-	"github.com/tylerwgrass/cruciterm/logger"
 	"github.com/tylerwgrass/cruciterm/puzzle"
-	"golang.org/x/term"
+	"github.com/tylerwgrass/cruciterm/theme"
 )
 
 type mainModel struct {
+	width       int
+	height      int
 	title       string
 	author      string
 	copyright   string
@@ -41,6 +42,8 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 	preferences := initPreferencesModel()
 	stopwatch := stopwatch.New()
 	help := help.New()
+	help.Styles.FullKey = theme.Get().Foreground(theme.Primary())
+	help.Styles.FullDesc = theme.Get().Foreground(theme.Secondary())
 	help.ShowAll = true
 	return mainModel{
 		stopwatch:   stopwatch,
@@ -56,11 +59,20 @@ func initMainModel(puz *puzzle.PuzzleDefinition) mainModel {
 }
 
 func (m mainModel) Init() tea.Cmd {
-	return m.stopwatch.Init()
+	return tea.Batch(
+		tea.RequestBackgroundColor,
+		m.stopwatch.Init(),
+	)
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		cmd := tea.SetBackgroundColor(theme.Background())
+		return m, cmd
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		return m, nil
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keys.Quit):
@@ -93,29 +105,27 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m mainModel) View() string {
+	style := theme.Get().Width(m.width).Height(m.height)
+	var view string
 	if m.activeView == Preferences {
-		return m.preferences.View()
+		view = m.preferences.View()
+	} else {
+		view = m.getSolverView()
 	}
 
-	return m.getSolverView()
+	return style.Render(view)
 }
 
 func (m mainModel) getSolverView() string {
-	width, height, err := term.GetSize(0)
-	if err != nil {
-		logger.Debug("Failed to get terminal size")
-		width = 500
-		height = 500
-	}
-	header := lipgloss.NewStyle().PaddingTop(height / 20).Render(fmt.Sprintf("%s\n%s %s\n", m.title, m.author, m.copyright))
+	header := theme.Get().PaddingTop(m.height / 20).Render(fmt.Sprintf("%s\n%s %s", m.title, m.author, m.copyright))
 	if m.grid.solved {
-		header += "Solved!\n"
+		header += theme.Apply("Solved!\n")
 	}
 	footer := m.help.View(keys)
 	mainContent := lipgloss.JoinVertical(
 		lipgloss.Center,
 		header,
-		lipgloss.NewStyle().AlignVertical(lipgloss.Center).Render(
+		theme.Get().AlignVertical(lipgloss.Center).Render(
 			lipgloss.JoinHorizontal(
 				lipgloss.Top,
 				lipgloss.JoinVertical(lipgloss.Left, m.grid.View(), m.stopwatch.View()),
@@ -123,7 +133,7 @@ func (m mainModel) getSolverView() string {
 			)),
 		footer,
 	)
-	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Top, mainContent)
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Top, mainContent)
 }
 
 func Run(puz *puzzle.PuzzleDefinition) {

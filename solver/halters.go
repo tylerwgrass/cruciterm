@@ -58,4 +58,3 @@ func (h ClueChangeHalter) Halt(n *Navigator, state *NavigationState) bool {
 func (h ClueChangeHalter) CheckInitialSquare() bool {
 	return h.checkInitialSquare
 }
-

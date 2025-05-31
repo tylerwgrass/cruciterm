@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -19,3 +20,7 @@ func Debug(msg string) {
 	logger.logFile.WriteString(msg)
 }
 
+func Debugf(format string, a ...any) {
+	format += "\n"
+	logger.logFile.WriteString(fmt.Sprintf(format, a...))
+}

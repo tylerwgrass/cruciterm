@@ -134,4 +134,3 @@ func (c Clue) String() string {
 		c.Answer,
 	)
 }
-
