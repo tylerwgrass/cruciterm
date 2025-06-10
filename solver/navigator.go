@@ -61,6 +61,9 @@ type NavigationState struct {
 	haltedOnMatch bool
 }
 
+var firstAcrossClueCell *Cell
+var firstDownClueCell *Cell
+
 var defaultHalter = makeHalter(ValidSquare, false)
 
 func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigator {
@@ -110,9 +113,17 @@ func NewNavigator(puzzleGrid [][]string, puz *puzzle.PuzzleDefinition) *Navigato
 					cell.prevDown = navGrid[row-1][col].prevDown
 				}
 			}
+			if cell.acrossClue == acrosses[0] {
+				firstAcrossClueCell = &cell
+			}
+			if cell.downClue == downs[0] {
+				firstDownClueCell = &cell
+			}
+
 			navGrid[row][col] = cell
 		}
 	}
+
 	return &Navigator{
 		grid:          &navGrid,
 		orientation:   Horizontal,
@@ -314,8 +325,8 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState) {
 				state.didWrap = true
 				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					navigator.orientation = Vertical
-					cell := grid[currentClue.StartRow][currentClue.StartCol]
-					nextClue = cell.nextDown
+					cell := grid[firstDownClueCell.downClue.StartRow][firstDownClueCell.downClue.StartCol]
+					nextClue = cell.acrossClue
 				}
 			}
 		} else {
@@ -337,8 +348,8 @@ func (navigator *Navigator) moveToNextClue(state *NavigationState) {
 				state.didWrap = true
 				if prefs.GetBool(prefs.SwapCursorOnGridWrap) {
 					navigator.orientation = Horizontal
-					cell := grid[currentClue.EndRow][currentClue.EndCol]
-					nextClue = cell.nextAcross
+					cell := grid[firstAcrossClueCell.acrossClue.StartRow][firstAcrossClueCell.acrossClue.StartCol]
+					nextClue = cell.downClue
 				}
 			}
 		} else {
